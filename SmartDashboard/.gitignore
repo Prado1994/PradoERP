@@ -1,0 +1,17 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Projeto gerado pelo XcodeGen (use `xcodegen generate` para recriar)
+SmartDashboard.xcodeproj/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# macOS
+.DS_Store

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Permissões de privacidade exigidas pelos recursos do app -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Usamos sua localização apenas para exibir a velocidade atual no velocímetro enquanto você dirige.</string>
+
+    <key>NSAppleMusicUsageDescription</key>
+    <string>Precisamos de acesso à sua biblioteca de mídia para exibir e controlar a música em reprodução.</string>
+
+    <!-- Modo Paisagem (Landscape) obrigatório -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- Esconde a barra de status para um visual de central multimídia -->
+    <key>UIStatusBarHidden</key>
+    <true/>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+
+    <!-- URL Schemes consultados via canOpenURL para abrir apps de navegação -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>waze</string>
+        <string>comgooglemaps</string>
+    </array>
+
+    <!-- Permite reprodução/atualização de áudio em segundo plano -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+    </array>
+</dict>
+</plist>

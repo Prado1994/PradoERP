@@ -1,0 +1,36 @@
+# Configuração para gerar o projeto Xcode com o XcodeGen.
+#
+# Instale com:  brew install xcodegen
+# Gere com:     cd SmartDashboard && xcodegen generate
+# Abra com:     open SmartDashboard.xcodeproj
+#
+# Este arquivo evita versionar o project.pbxproj (gerado/instável) e mantém a
+# configuração do alvo legível e fácil de revisar.
+
+name: SmartDashboard
+options:
+  bundleIdPrefix: com.pradocalcados
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: "" # preencha com o seu Team ID ao assinar o app
+
+targets:
+  SmartDashboard:
+    type: application
+    platform: iOS
+    sources:
+      - SmartDashboard
+    settings:
+      base:
+        INFOPLIST_FILE: SmartDashboard/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.pradocalcados.smartdashboard
+        TARGETED_DEVICE_FAMILY: "1,2" # iPhone e iPad
+        ENABLE_PREVIEWS: "YES"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
