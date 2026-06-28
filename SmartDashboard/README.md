@@ -41,6 +41,26 @@ Tela cheia aberta ao tocar na capa, com **controles por gestos**:
 Temas Claro/Escuro de alto contraste. No modo `automatic`, o fundo fica escuro
 entre 18h e 6h para não ofuscar o condutor.
 
+## Arquitetura de mídia
+
+As telas não falam diretamente com Apple Music ou Spotify. Elas observam um
+único `PlaybackCoordinator`, que expõe um `NowPlayingState` unificado e
+encaminha os comandos para a **fonte ativa**:
+
+```
+        Views (MultimediaWidget, ImmersivePlayerView)
+                        │  observa NowPlayingState
+                        ▼
+                PlaybackCoordinator  ──switchTo(.appleMusic/.spotify)
+                        │ delega
+        ┌───────────────┴───────────────┐
+   MusicPlayerManager              SpotifyManager
+   (MediaSource, real)             (MediaSource, scaffold)
+```
+
+Adicionar uma nova fonte = criar um tipo que conforme `MediaSource`. Nenhuma
+view precisa mudar.
+
 ## Estrutura do projeto
 
 ```
@@ -50,7 +70,9 @@ SmartDashboard/
     ├── App/SmartDashboardApp.swift # @main + trava de orientação (AppDelegate)
     ├── ContentView.swift           # Painel unificado (grade landscape)
     ├── Managers/
-    │   ├── MusicPlayerManager.swift
+    │   ├── MediaPlayback.swift      # Protocolo MediaSource + PlaybackCoordinator
+    │   ├── MusicPlayerManager.swift # Fonte Apple Music (MPMusicPlayerController)
+    │   ├── SpotifyManager.swift     # Fonte Spotify (scaffold com TODOs)
     │   └── LocationManager.swift
     ├── Views/
     │   ├── MultimediaWidget.swift
@@ -85,9 +107,17 @@ hardware real).
 
 ## Limitações conhecidas / próximos passos
 
-- **Spotify:** o `MPMusicPlayerController` controla apenas o reprodutor do
-  sistema (Apple Music / biblioteca local). Ler a faixa atual do Spotify exige
-  o SDK próprio do Spotify e será avaliado em uma próxima iteração.
+- **Spotify:** a fonte já existe como *scaffold* (`SpotifyManager`) e o seletor
+  de fonte já aparece na interface, mas os controles ainda são `TODO`. Para
+  ativar de verdade:
+  1. No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard),
+     crie um app, copie o **Client ID**, registre o Redirect URI
+     `smartdashboard://spotify-callback` e o Bundle ID do app.
+  2. Adicione o **Spotify iOS SDK** (`SpotifyiOS.xcframework`) ao alvo.
+  3. Preencha `clientID` em `SpotifyManager.swift` e implemente os trechos
+     `TODO` com `SPTSessionManager` (login) e `SPTAppRemote` (controle/estado).
+  4. O `Info.plist` já traz o `spotify` em `LSApplicationQueriesSchemes` e o
+     `CFBundleURLTypes` com o scheme `smartdashboard` para o callback.
 - Traçar rota automaticamente no Waze/Maps a partir de um destino fixo
   (parâmetros de coordenadas nas URLs).
 - Tela de ajustes para escolher manualmente o tema e os destinos favoritos.

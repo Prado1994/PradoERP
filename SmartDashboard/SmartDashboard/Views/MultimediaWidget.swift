@@ -4,35 +4,41 @@ import SwiftUI
 ///
 /// Renderiza, em tamanho grande, a capa do álbum em reprodução, o nome da faixa
 /// em tipografia espessa e botões gigantes de controle (Anterior, Play/Pause,
-/// Próxima). Tocar em qualquer área da capa abre a Tela de Reprodução Imersiva.
+/// Próxima). Tocar na capa abre a Tela de Reprodução Imersiva. Um seletor
+/// permite alternar entre as fontes (Apple Music / Spotify).
 struct MultimediaWidget: View {
 
-    @ObservedObject var music: MusicPlayerManager
+    @ObservedObject var coordinator: PlaybackCoordinator
 
     /// Acionado ao tocar na capa, para abrir o modo imersivo.
     var onOpenImmersive: () -> Void
+
+    private var state: NowPlayingState { coordinator.state }
 
     var body: some View {
         WidgetContainer {
             HStack(spacing: DS.contentSpacing) {
 
                 // Capa do álbum (área de toque para o modo imersivo).
-                AlbumArtworkView(image: music.artwork)
+                AlbumArtworkView(image: state.artwork)
                     .aspectRatio(1, contentMode: .fit)
                     .frame(maxHeight: .infinity)
                     .contentShape(Rectangle())
                     .onTapGesture(perform: onOpenImmersive)
 
-                // Informações da faixa + controles gigantes.
+                // Seletor de fonte + informações da faixa + controles gigantes.
                 VStack(alignment: .leading, spacing: DS.contentSpacing) {
+
+                    SourcePicker(coordinator: coordinator)
+
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(music.title)
+                        Text(state.title)
                             .font(.system(size: 30, weight: .heavy))
                             .lineLimit(2)
                             .minimumScaleFactor(0.7)
 
-                        if !music.artist.isEmpty {
-                            Text(music.artist)
+                        if !state.artist.isEmpty {
+                            Text(state.artist)
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -41,7 +47,7 @@ struct MultimediaWidget: View {
 
                     Spacer(minLength: 0)
 
-                    PlaybackControls(music: music)
+                    PlaybackControls(coordinator: coordinator)
 
                     Spacer(minLength: 0)
                 }
@@ -49,6 +55,23 @@ struct MultimediaWidget: View {
             }
             .padding(DS.contentSpacing)
         }
+    }
+}
+
+/// Alternador compacto entre as fontes de mídia disponíveis.
+struct SourcePicker: View {
+    @ObservedObject var coordinator: PlaybackCoordinator
+
+    var body: some View {
+        Picker("Fonte", selection: Binding(
+            get: { coordinator.activeKind },
+            set: { coordinator.switchTo($0) }
+        )) {
+            ForEach(MediaSourceKind.allCases) { kind in
+                Text(kind.label).tag(kind)
+            }
+        }
+        .pickerStyle(.segmented)
     }
 }
 
@@ -77,12 +100,12 @@ struct AlbumArtworkView: View {
 
 /// Linha de botões gigantes: Anterior, Play/Pause (proeminente) e Próxima.
 struct PlaybackControls: View {
-    @ObservedObject var music: MusicPlayerManager
+    @ObservedObject var coordinator: PlaybackCoordinator
 
     var body: some View {
         HStack(spacing: DS.contentSpacing) {
             Button {
-                music.previous()
+                coordinator.previous()
             } label: {
                 Image(systemName: "backward.fill")
             }
@@ -90,15 +113,15 @@ struct PlaybackControls: View {
             .accessibilityLabel("Faixa anterior")
 
             Button {
-                music.playPause()
+                coordinator.playPause()
             } label: {
-                Image(systemName: music.isPlaying ? "pause.fill" : "play.fill")
+                Image(systemName: coordinator.state.isPlaying ? "pause.fill" : "play.fill")
             }
             .buttonStyle(CircularControlButtonStyle(size: DS.primaryControlSize, isProminent: true))
-            .accessibilityLabel(music.isPlaying ? "Pausar" : "Reproduzir")
+            .accessibilityLabel(coordinator.state.isPlaying ? "Pausar" : "Reproduzir")
 
             Button {
-                music.next()
+                coordinator.next()
             } label: {
                 Image(systemName: "forward.fill")
             }

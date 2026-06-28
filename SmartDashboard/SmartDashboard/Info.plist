@@ -27,11 +27,25 @@
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
 
-    <!-- URL Schemes consultados via canOpenURL para abrir apps de navegação -->
+    <!-- URL Schemes consultados via canOpenURL (apps de navegação e Spotify) -->
     <key>LSApplicationQueriesSchemes</key>
     <array>
         <string>waze</string>
         <string>comgooglemaps</string>
+        <string>spotify</string>
+    </array>
+
+    <!-- URL scheme próprio para receber o callback de login do Spotify -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.pradocalcados.smartdashboard</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>smartdashboard</string>
+            </array>
+        </dict>
     </array>
 
     <!-- Permite reprodução/atualização de áudio em segundo plano -->

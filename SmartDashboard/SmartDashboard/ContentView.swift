@@ -10,7 +10,7 @@ import SwiftUI
 /// tela cheia, com controles por gestos.
 struct ContentView: View {
 
-    @StateObject private var music = MusicPlayerManager()
+    @StateObject private var coordinator = PlaybackCoordinator()
     @StateObject private var location = LocationManager()
 
     @State private var showImmersivePlayer = false
@@ -24,7 +24,7 @@ struct ContentView: View {
                     .frame(width: proxy.size.width * 0.4 - DS.widgetSpacing)
 
                 // Widget Multimídia — foco principal, ocupa o restante (~60%).
-                MultimediaWidget(music: music) {
+                MultimediaWidget(coordinator: coordinator) {
                     showImmersivePlayer = true
                 }
             }
@@ -33,14 +33,14 @@ struct ContentView: View {
             .background(DS.background.ignoresSafeArea())
         }
         .fullScreenCover(isPresented: $showImmersivePlayer) {
-            ImmersivePlayerView(music: music)
+            ImmersivePlayerView(coordinator: coordinator)
         }
         .onAppear {
             // Impede que a tela do iPhone desligue enquanto o app está aberto.
             UIApplication.shared.isIdleTimerDisabled = true
 
-            // Solicita permissões necessárias na primeira execução.
-            music.requestAuthorization()
+            // O coordenador já ativa a fonte e pede autorização de mídia na sua
+            // inicialização; aqui cuidamos apenas da localização.
             location.requestAuthorization()
             location.start()
         }

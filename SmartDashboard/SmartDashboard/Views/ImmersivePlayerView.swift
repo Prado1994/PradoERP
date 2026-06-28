@@ -7,9 +7,10 @@ import SwiftUI
 /// - Deslizar para a DIREITA  -> avança a faixa (próxima).
 /// - Deslizar para a ESQUERDA -> volta a faixa (anterior).
 /// - Toque simples no meio     -> pausa / retoma a reprodução.
+/// - Arrastar sobre a barra    -> navega na faixa (scrubbing).
 struct ImmersivePlayerView: View {
 
-    @ObservedObject var music: MusicPlayerManager
+    @ObservedObject var coordinator: PlaybackCoordinator
     @Environment(\.dismiss) private var dismiss
 
     /// Distância mínima para um deslize ser considerado uma troca de faixa.
@@ -18,26 +19,28 @@ struct ImmersivePlayerView: View {
     /// Feedback visual momentâneo para confirmar o gesto reconhecido.
     @State private var gestureHint: String?
 
+    private var state: NowPlayingState { coordinator.state }
+
     var body: some View {
         ZStack {
             // Fundo: capa borrada para um visual imersivo de alto contraste.
             backgroundLayer
 
             VStack(spacing: 28) {
-                AlbumArtworkView(image: music.artwork)
+                AlbumArtworkView(image: state.artwork)
                     .aspectRatio(1, contentMode: .fit)
                     .frame(maxHeight: 320)
                     .shadow(radius: 20)
 
                 VStack(spacing: 8) {
-                    Text(music.title)
+                    Text(state.title)
                         .font(.system(size: 34, weight: .heavy))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .minimumScaleFactor(0.7)
 
-                    if !music.artist.isEmpty {
-                        Text(music.artist)
+                    if !state.artist.isEmpty {
+                        Text(state.artist)
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -45,11 +48,11 @@ struct ImmersivePlayerView: View {
                 .padding(.horizontal, 40)
 
                 // Barra de progresso com scrubbing por gesto.
-                ScrubBar(music: music)
+                ScrubBar(coordinator: coordinator)
                     .frame(maxWidth: 560)
                     .padding(.horizontal, 40)
 
-                Image(systemName: music.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                Image(systemName: state.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.system(size: 56))
                     .foregroundStyle(.secondary)
             }
@@ -87,8 +90,8 @@ struct ImmersivePlayerView: View {
         .contentShape(Rectangle())
         .gesture(dragGesture)
         .onTapGesture {
-            music.playPause()
-            flashHint(music.isPlaying ? "Pausar" : "Reproduzir")
+            coordinator.playPause()
+            flashHint(state.isPlaying ? "Pausar" : "Reproduzir")
         }
     }
 
@@ -96,7 +99,7 @@ struct ImmersivePlayerView: View {
 
     @ViewBuilder
     private var backgroundLayer: some View {
-        if let artwork = music.artwork {
+        if let artwork = state.artwork {
             Image(uiImage: artwork)
                 .resizable()
                 .scaledToFill()
@@ -119,10 +122,10 @@ struct ImmersivePlayerView: View {
                 guard abs(horizontal) > abs(vertical) else { return }
 
                 if horizontal > swipeThreshold {
-                    music.next()
+                    coordinator.next()
                     flashHint("Próxima ⏭")
                 } else if horizontal < -swipeThreshold {
-                    music.previous()
+                    coordinator.previous()
                     flashHint("Anterior ⏮")
                 }
             }
@@ -144,7 +147,7 @@ struct ImmersivePlayerView: View {
 /// gesto não conflita com o deslize de troca de faixa do restante da tela.
 struct ScrubBar: View {
 
-    @ObservedObject var music: MusicPlayerManager
+    @ObservedObject var coordinator: PlaybackCoordinator
 
     /// Posição sendo arrastada (0...1); `nil` quando não há arraste em curso.
     @State private var draggingFraction: Double?
@@ -152,9 +155,11 @@ struct ScrubBar: View {
     private let barHeight: CGFloat = 10
     private let knobSize: CGFloat = 26
 
+    private var duration: TimeInterval { coordinator.state.duration }
+
     /// Fração exibida: a do arraste (se houver) ou a real do player.
     private var displayedFraction: Double {
-        draggingFraction ?? music.progress
+        draggingFraction ?? coordinator.state.progress
     }
 
     var body: some View {
@@ -186,12 +191,11 @@ struct ScrubBar: View {
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
-                            let fraction = min(max(value.location.x / width, 0), 1)
-                            draggingFraction = fraction
+                            draggingFraction = min(max(value.location.x / width, 0), 1)
                         }
                         .onEnded { value in
                             let fraction = min(max(value.location.x / width, 0), 1)
-                            music.seek(toFraction: fraction)
+                            coordinator.seek(toFraction: fraction)
                             draggingFraction = nil
                         }
                 )
@@ -200,9 +204,9 @@ struct ScrubBar: View {
 
             // Tempo decorrido / restante.
             HStack {
-                Text(Self.format(displayedFraction * music.duration))
+                Text(Self.format(displayedFraction * duration))
                 Spacer()
-                Text("-" + Self.format(music.duration - displayedFraction * music.duration))
+                Text("-" + Self.format(duration - displayedFraction * duration))
             }
             .font(.system(size: 15, weight: .semibold).monospacedDigit())
             .foregroundStyle(.secondary)
@@ -218,5 +222,5 @@ struct ScrubBar: View {
 }
 
 #Preview(traits: .landscapeLeft) {
-    ImmersivePlayerView(music: MusicPlayerManager())
+    ImmersivePlayerView(coordinator: PlaybackCoordinator())
 }

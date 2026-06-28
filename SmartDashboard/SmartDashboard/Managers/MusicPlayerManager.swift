@@ -1,60 +1,57 @@
 import Foundation
 import MediaPlayer
-import Combine
 
-/// Conecta a interface ao reprodutor de mídia do sistema através do
-/// `MPMusicPlayerController`.
+/// Fonte de mídia do Apple Music / biblioteca local, via
+/// `MPMusicPlayerController.systemMusicPlayer`.
 ///
-/// Importante: o `systemMusicPlayer` controla o reprodutor do sistema (Apple
-/// Music / biblioteca local). Aplicativos de terceiros como o Spotify NÃO
-/// expõem sua faixa atual via APIs públicas — para esses casos a integração
-/// futura precisaria de SDKs específicos. Esta primeira versão foca no Apple
-/// Music, conforme o requisito principal.
+/// Conforma a `MediaSource`: em vez de ser observada diretamente pela
+/// interface, ela reporta seu estado ao `PlaybackCoordinator` através do
+/// callback `onStateChange`.
 @MainActor
-final class MusicPlayerManager: ObservableObject {
+final class MusicPlayerManager: MediaSource {
+
+    let kind: MediaSourceKind = .appleMusic
+    var onStateChange: ((NowPlayingState) -> Void)?
 
     private let player = MPMusicPlayerController.systemMusicPlayer
-
-    @Published var title: String = "Nada tocando"
-    @Published var artist: String = ""
-    @Published var artwork: UIImage?
-    @Published var isPlaying: Bool = false
-    /// Status de autorização para acessar a biblioteca de mídia.
-    @Published var isAuthorized: Bool = false
-
-    /// Posição atual de reprodução, em segundos.
-    @Published var elapsedTime: TimeInterval = 0
-    /// Duração total da faixa atual, em segundos (0 quando indisponível).
-    @Published var duration: TimeInterval = 0
-
-    /// Fração de progresso (0...1), conveniente para a barra de progresso.
-    var progress: Double {
-        guard duration > 0 else { return 0 }
-        return min(max(elapsedTime / duration, 0), 1)
-    }
-
-    /// Atualiza a posição de reprodução periodicamente enquanto toca.
+    private var state = NowPlayingState()
     private var ticker: Timer?
+    private var isActive = false
 
-    init() {
-        configureObservers()
+    // MARK: - Ciclo de vida da fonte
+
+    func activate() {
+        guard !isActive else { return }
+        isActive = true
+
+        player.beginGeneratingPlaybackNotifications()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handleNowPlayingChanged),
+            name: .MPMusicPlayerControllerNowPlayingItemDidChange, object: player
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handlePlaybackStateChanged),
+            name: .MPMusicPlayerControllerPlaybackStateDidChange, object: player
+        )
+
         refreshNowPlaying()
         refreshPlaybackState()
-        // Reflete imediatamente um estado de autorização já concedido.
-        isAuthorized = MPMediaLibrary.authorizationStatus() == .authorized
     }
 
-    // MARK: - Autorização
+    func deactivate() {
+        guard isActive else { return }
+        isActive = false
 
-    /// Solicita acesso à biblioteca de mídia. Deve ser chamado quando a tela
-    /// principal aparece.
+        stopTicker()
+        NotificationCenter.default.removeObserver(self)
+        player.endGeneratingPlaybackNotifications()
+    }
+
     func requestAuthorization() {
-        MPMediaLibrary.requestAuthorization { [weak self] status in
+        MPMediaLibrary.requestAuthorization { [weak self] _ in
             Task { @MainActor in
-                guard let self else { return }
-                self.isAuthorized = (status == .authorized)
-                self.refreshNowPlaying()
-                self.refreshPlaybackState()
+                self?.refreshNowPlaying()
+                self?.refreshPlaybackState()
             }
         }
     }
@@ -62,11 +59,7 @@ final class MusicPlayerManager: ObservableObject {
     // MARK: - Controles de reprodução
 
     func playPause() {
-        if isPlaying {
-            player.pause()
-        } else {
-            player.play()
-        }
+        state.isPlaying ? player.pause() : player.play()
     }
 
     func next() {
@@ -75,41 +68,19 @@ final class MusicPlayerManager: ObservableObject {
 
     func previous() {
         // Comportamento "duplo": volta ao início da faixa; se já no início,
-        // o sistema avança para a faixa anterior na próxima chamada.
+        // o sistema vai para a faixa anterior na próxima chamada.
         player.skipToPreviousItem()
     }
 
-    /// Salta para uma posição absoluta (em segundos) da faixa atual.
-    func seek(to time: TimeInterval) {
-        let clamped = min(max(time, 0), max(duration, 0))
-        player.currentPlaybackTime = clamped
-        elapsedTime = clamped
-    }
-
-    /// Salta para uma fração (0...1) da faixa atual — usado pelo scrubber.
     func seek(toFraction fraction: Double) {
-        guard duration > 0 else { return }
-        seek(to: fraction * duration)
+        guard state.duration > 0 else { return }
+        let time = min(max(fraction, 0), 1) * state.duration
+        player.currentPlaybackTime = time
+        state.elapsedTime = time
+        emit()
     }
 
-    // MARK: - Observação de notificações
-
-    private func configureObservers() {
-        player.beginGeneratingPlaybackNotifications()
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleNowPlayingChanged),
-            name: .MPMusicPlayerControllerNowPlayingItemDidChange,
-            object: player
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePlaybackStateChanged),
-            name: .MPMusicPlayerControllerPlaybackStateDidChange,
-            object: player
-        )
-    }
+    // MARK: - Notificações
 
     @objc private func handleNowPlayingChanged() {
         Task { @MainActor in refreshNowPlaying() }
@@ -122,30 +93,28 @@ final class MusicPlayerManager: ObservableObject {
     // MARK: - Atualização de estado
 
     private func refreshNowPlaying() {
-        guard let item = player.nowPlayingItem else {
-            title = "Nada tocando"
-            artist = ""
-            artwork = nil
-            return
-        }
-
-        title = item.title ?? "Faixa desconhecida"
-        artist = item.artist ?? ""
-        duration = item.playbackDuration
-        elapsedTime = player.currentPlaybackTime
-
-        if let artworkRef = item.artwork {
-            artwork = artworkRef.image(at: CGSize(width: 600, height: 600))
+        if let item = player.nowPlayingItem {
+            state.title = item.title ?? "Faixa desconhecida"
+            state.artist = item.artist ?? ""
+            state.duration = item.playbackDuration
+            state.elapsedTime = player.currentPlaybackTime
+            state.artwork = item.artwork?.image(at: CGSize(width: 600, height: 600))
         } else {
-            artwork = nil
+            state.title = "Nada tocando"
+            state.artist = ""
+            state.duration = 0
+            state.elapsedTime = 0
+            state.artwork = nil
         }
+        emit()
     }
 
     private func refreshPlaybackState() {
-        isPlaying = player.playbackState == .playing
+        state.isPlaying = player.playbackState == .playing
         // Mantém o cronômetro rodando apenas enquanto há reprodução ativa.
-        isPlaying ? startTicker() : stopTicker()
-        elapsedTime = player.currentPlaybackTime
+        state.isPlaying ? startTicker() : stopTicker()
+        state.elapsedTime = player.currentPlaybackTime
+        emit()
     }
 
     // MARK: - Cronômetro de progresso
@@ -155,7 +124,8 @@ final class MusicPlayerManager: ObservableObject {
         ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                self.elapsedTime = self.player.currentPlaybackTime
+                self.state.elapsedTime = self.player.currentPlaybackTime
+                self.emit()
             }
         }
     }
@@ -165,9 +135,12 @@ final class MusicPlayerManager: ObservableObject {
         ticker = nil
     }
 
+    private func emit() {
+        onStateChange?(state)
+    }
+
     deinit {
         ticker?.invalidate()
-        player.endGeneratingPlaybackNotifications()
         NotificationCenter.default.removeObserver(self)
     }
 }
