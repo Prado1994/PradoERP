@@ -33,8 +33,13 @@ final class ThemeManager: ObservableObject {
     }
 
     @Published var mode: Mode = .automatic {
-        didSet { recompute() }
+        didSet {
+            UserDefaults.standard.set(mode.rawValue, forKey: Self.storageKey)
+            recompute()
+        }
     }
+
+    private static let storageKey = "themeMode"
 
     /// Esquema de cores resolvido e aplicado na cena principal.
     @Published private(set) var colorScheme: ColorScheme?
@@ -47,6 +52,11 @@ final class ThemeManager: ObservableObject {
     private var timer: AnyCancellable?
 
     init() {
+        // Restaura a preferência salva (sem disparar didSet durante o init).
+        if let raw = UserDefaults.standard.string(forKey: Self.storageKey),
+           let saved = Mode(rawValue: raw) {
+            mode = saved
+        }
         recompute()
         // Reavalia periodicamente para alternar o tema sozinho na virada do dia.
         timer = Timer.publish(every: 60, on: .main, in: .common)

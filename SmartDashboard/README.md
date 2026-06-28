@@ -18,9 +18,11 @@ Grade estática em paisagem com dois grandes blocos de cantos arredondados:
 
 - **Widget de Condução** (`DrivingWidget`, ~40% da tela)
   - Velocímetro digital baseado no GPS (`LocationManager`).
-  - Relógio atual.
-  - Atalhos gigantes para **Waze** e **Google Maps** via URL Schemes
-    (`waze://`, `comgooglemaps://`), com alternativa via web.
+  - Relógio atual e botão de **Ajustes**.
+  - Atalhos gigantes para **destinos favoritos** que abrem o app de navegação
+    preferido (Waze / Google Maps / Apple Maps) **já traçando a rota** (URLs com
+    coordenadas), com alternativa via web. Sem destinos, vira um botão que só
+    abre o app de navegação.
 
 - **Widget Multimídia** (`MultimediaWidget`, foco principal, ~60% da tela)
   - Conecta-se ao reprodutor do sistema via `MPMusicPlayerController`
@@ -39,7 +41,14 @@ Tela cheia aberta ao tocar na capa, com **controles por gestos**:
 
 ### 3. Adaptação Dinâmica (`ThemeManager`)
 Temas Claro/Escuro de alto contraste. No modo `automatic`, o fundo fica escuro
-entre 18h e 6h para não ofuscar o condutor.
+entre 18h e 6h para não ofuscar o condutor. A preferência é persistida.
+
+### 4. Ajustes (`SettingsView`)
+Aberta pelo botão de engrenagem no painel:
+- Tema (Sistema / Automático / Claro / Escuro).
+- App de navegação preferido (`AppSettings`, persistido).
+- CRUD de **destinos favoritos** (`DestinationStore`, persistido em
+  `UserDefaults`), com nome, ícone e coordenadas.
 
 ## Arquitetura de mídia
 
@@ -118,9 +127,9 @@ hardware real).
      `TODO` com `SPTSessionManager` (login) e `SPTAppRemote` (controle/estado).
   4. O `Info.plist` já traz o `spotify` em `LSApplicationQueriesSchemes` e o
      `CFBundleURLTypes` com o scheme `smartdashboard` para o callback.
-- Traçar rota automaticamente no Waze/Maps a partir de um destino fixo
-  (parâmetros de coordenadas nas URLs).
-- Tela de ajustes para escolher manualmente o tema e os destinos favoritos.
+- Selecionar destinos no mapa (em vez de digitar coordenadas) e usar o
+  `MapKit`/busca por endereço.
+- Ícone do app e identidade visual.
 
 ## Dica de uso no carro
 
