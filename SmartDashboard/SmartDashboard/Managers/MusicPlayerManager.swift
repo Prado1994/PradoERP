@@ -22,6 +22,20 @@ final class MusicPlayerManager: ObservableObject {
     /// Status de autorização para acessar a biblioteca de mídia.
     @Published var isAuthorized: Bool = false
 
+    /// Posição atual de reprodução, em segundos.
+    @Published var elapsedTime: TimeInterval = 0
+    /// Duração total da faixa atual, em segundos (0 quando indisponível).
+    @Published var duration: TimeInterval = 0
+
+    /// Fração de progresso (0...1), conveniente para a barra de progresso.
+    var progress: Double {
+        guard duration > 0 else { return 0 }
+        return min(max(elapsedTime / duration, 0), 1)
+    }
+
+    /// Atualiza a posição de reprodução periodicamente enquanto toca.
+    private var ticker: Timer?
+
     init() {
         configureObservers()
         refreshNowPlaying()
@@ -65,6 +79,19 @@ final class MusicPlayerManager: ObservableObject {
         player.skipToPreviousItem()
     }
 
+    /// Salta para uma posição absoluta (em segundos) da faixa atual.
+    func seek(to time: TimeInterval) {
+        let clamped = min(max(time, 0), max(duration, 0))
+        player.currentPlaybackTime = clamped
+        elapsedTime = clamped
+    }
+
+    /// Salta para uma fração (0...1) da faixa atual — usado pelo scrubber.
+    func seek(toFraction fraction: Double) {
+        guard duration > 0 else { return }
+        seek(to: fraction * duration)
+    }
+
     // MARK: - Observação de notificações
 
     private func configureObservers() {
@@ -104,6 +131,8 @@ final class MusicPlayerManager: ObservableObject {
 
         title = item.title ?? "Faixa desconhecida"
         artist = item.artist ?? ""
+        duration = item.playbackDuration
+        elapsedTime = player.currentPlaybackTime
 
         if let artworkRef = item.artwork {
             artwork = artworkRef.image(at: CGSize(width: 600, height: 600))
@@ -114,9 +143,30 @@ final class MusicPlayerManager: ObservableObject {
 
     private func refreshPlaybackState() {
         isPlaying = player.playbackState == .playing
+        // Mantém o cronômetro rodando apenas enquanto há reprodução ativa.
+        isPlaying ? startTicker() : stopTicker()
+        elapsedTime = player.currentPlaybackTime
+    }
+
+    // MARK: - Cronômetro de progresso
+
+    private func startTicker() {
+        guard ticker == nil else { return }
+        ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                self.elapsedTime = self.player.currentPlaybackTime
+            }
+        }
+    }
+
+    private func stopTicker() {
+        ticker?.invalidate()
+        ticker = nil
     }
 
     deinit {
+        ticker?.invalidate()
         player.endGeneratingPlaybackNotifications()
         NotificationCenter.default.removeObserver(self)
     }

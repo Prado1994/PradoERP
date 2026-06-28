@@ -34,6 +34,8 @@ Tela cheia aberta ao tocar na capa, com **controles por gestos**:
 - Deslizar para a **direita** → próxima faixa.
 - Deslizar para a **esquerda** → faixa anterior.
 - **Toque** no centro → pausar/retomar.
+- **Barra de progresso** com tempo decorrido/restante e *scrubbing* por gesto
+  (arrastar sobre a barra navega na faixa; `seek` via `currentPlaybackTime`).
 
 ### 3. Adaptação Dinâmica (`ThemeManager`)
 Temas Claro/Escuro de alto contraste. No modo `automatic`, o fundo fica escuro

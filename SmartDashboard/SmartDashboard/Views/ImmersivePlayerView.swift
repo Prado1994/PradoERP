@@ -44,6 +44,11 @@ struct ImmersivePlayerView: View {
                 }
                 .padding(.horizontal, 40)
 
+                // Barra de progresso com scrubbing por gesto.
+                ScrubBar(music: music)
+                    .frame(maxWidth: 560)
+                    .padding(.horizontal, 40)
+
                 Image(systemName: music.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.system(size: 56))
                     .foregroundStyle(.secondary)
@@ -128,6 +133,87 @@ struct ImmersivePlayerView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation(.easeIn(duration: 0.25)) { gestureHint = nil }
         }
+    }
+}
+
+/// Barra de progresso com scrubbing por gesto.
+///
+/// Arrastar o dedo sobre a barra ajusta a posição da faixa. Enquanto o dedo
+/// está pressionado, a barra mostra a posição "fantasma" para onde o usuário
+/// está navegando; ao soltar, aplica o `seek`. Como ocupa sua própria área, o
+/// gesto não conflita com o deslize de troca de faixa do restante da tela.
+struct ScrubBar: View {
+
+    @ObservedObject var music: MusicPlayerManager
+
+    /// Posição sendo arrastada (0...1); `nil` quando não há arraste em curso.
+    @State private var draggingFraction: Double?
+
+    private let barHeight: CGFloat = 10
+    private let knobSize: CGFloat = 26
+
+    /// Fração exibida: a do arraste (se houver) ou a real do player.
+    private var displayedFraction: Double {
+        draggingFraction ?? music.progress
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            GeometryReader { geo in
+                let width = geo.size.width
+                let filledWidth = width * displayedFraction
+
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.primary.opacity(0.2))
+                        .frame(height: barHeight)
+
+                    Capsule()
+                        .fill(DS.accent)
+                        .frame(width: filledWidth, height: barHeight)
+
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: knobSize, height: knobSize)
+                        .shadow(radius: 3)
+                        .offset(x: filledWidth - knobSize / 2)
+                        .scaleEffect(draggingFraction != nil ? 1.25 : 1.0)
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7),
+                                   value: draggingFraction != nil)
+                }
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            let fraction = min(max(value.location.x / width, 0), 1)
+                            draggingFraction = fraction
+                        }
+                        .onEnded { value in
+                            let fraction = min(max(value.location.x / width, 0), 1)
+                            music.seek(toFraction: fraction)
+                            draggingFraction = nil
+                        }
+                )
+            }
+            .frame(height: max(knobSize, 32))
+
+            // Tempo decorrido / restante.
+            HStack {
+                Text(Self.format(displayedFraction * music.duration))
+                Spacer()
+                Text("-" + Self.format(music.duration - displayedFraction * music.duration))
+            }
+            .font(.system(size: 15, weight: .semibold).monospacedDigit())
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Formata segundos como m:ss.
+    private static func format(_ seconds: TimeInterval) -> String {
+        guard seconds.isFinite, seconds >= 0 else { return "0:00" }
+        let total = Int(seconds)
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
 
