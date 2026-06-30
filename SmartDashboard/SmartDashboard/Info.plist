@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- Launch screen moderna (necessária para o app usar a tela inteira e
+         respeitar corretamente a orientação Paisagem) -->
+    <key>UILaunchScreen</key>
+    <dict/>
+
     <!-- Permissões de privacidade exigidas pelos recursos do app -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Usamos sua localização apenas para exibir a velocidade atual no velocímetro enquanto você dirige.</string>

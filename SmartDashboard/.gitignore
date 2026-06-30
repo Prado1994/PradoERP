@@ -6,8 +6,10 @@ xcuserdata/
 *.xcscmblueprint
 *.xccheckout
 
-# Projeto gerado pelo XcodeGen (use `xcodegen generate` para recriar)
-SmartDashboard.xcodeproj/
+# O .xcodeproj é versionado para abrir e rodar direto — ignoramos só o
+# estado por usuário dentro dele.
+SmartDashboard.xcodeproj/xcuserdata/
+SmartDashboard.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Swift Package Manager
 .swiftpm/

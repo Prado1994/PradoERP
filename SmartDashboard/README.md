@@ -96,23 +96,28 @@ SmartDashboard/
 
 ## Como abrir e rodar
 
-Requer macOS com Xcode 15+ e um iPhone (recomendado: iOS 16+).
-
-O `.xcodeproj` não é versionado — gere-o com [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+Requer macOS com **Xcode 16+**. O projeto já está pronto — basta abrir:
 
 ```bash
-brew install xcodegen
 cd SmartDashboard
-xcodegen generate
 open SmartDashboard.xcodeproj
 ```
 
-No Xcode, selecione seu *Team* de assinatura em **Signing & Capabilities** e
-rode em um dispositivo físico (o velocímetro e o player do sistema dependem de
-hardware real).
+Depois, escolha o destino e dê **Run (⌘R)**:
 
-> Sem o XcodeGen, você pode criar um App iOS em branco no Xcode e arrastar a
-> pasta `SmartDashboard/` para o projeto, garantindo o `Info.plist` indicado.
+- **Simulador de iPhone** (o mais simples para ver a v1): roda sem precisar de
+  conta de desenvolvedor. O velocímetro fica em 0 e o player não tem música,
+  mas toda a interface, navegação entre telas e gestos funcionam.
+- **iPhone físico**: em **Signing & Capabilities**, selecione seu *Team* de
+  assinatura. Só no aparelho real o velocímetro (GPS) e o Apple Music funcionam
+  de fato.
+
+> O projeto usa *file system synchronized groups* (Xcode 16+): novos arquivos
+> `.swift` dentro de `SmartDashboard/` entram no build automaticamente, sem
+> mexer no `.xcodeproj`.
+>
+> Alternativa: há também um `project.yml` para regenerar o projeto com
+> [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`xcodegen generate`).
 
 ## Limitações conhecidas / próximos passos
 
