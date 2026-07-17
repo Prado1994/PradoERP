@@ -6,6 +6,9 @@ import Login from './pages/Login'
 import Apontamento from './pages/Apontamento'
 import Painel from './pages/Painel'
 import Dashboard from './pages/Dashboard'
+import Planos from './pages/Planos'
+import PlanoDetalhe from './pages/PlanoDetalhe'
+import Pedidos from './pages/Pedidos'
 import Ops from './pages/Ops'
 import OpDetalhe from './pages/OpDetalhe'
 import FichaPrint from './pages/FichaPrint'
@@ -46,6 +49,9 @@ export default function App() {
         <Route path="/" element={papel === 'operador' ? <Navigate to="/apontar" replace /> : <Painel />} />
         <Route path="/apontar" element={<Apontamento />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/planos" element={<Planos />} />
+        <Route path="/planos/:id" element={<PlanoDetalhe />} />
+        <Route path="/pedidos" element={<Pedidos />} />
         <Route path="/ops" element={<Ops />} />
         <Route path="/ops/:id" element={<OpDetalhe />} />
         <Route path="/modelos" element={<Modelos />} />

@@ -6,8 +6,24 @@ Sistema independente para acompanhar a produção de calçados através da **fic
 
 ---
 
+## Hierarquia de planejamento
+
+```
+Plano de Produção  (PL-2026-001 — agrupa vários pedidos num período)
+└── Pedido         (PD-2026-0001 — cliente/canal, com itens por modelo)
+    └── Ordem de Produção  (OP-2026-0001 — um modelo, numa unidade fabril)
+        └── Ficha de Produção  (F-000001 — lote com QR Code)
+            └── Apontamentos por etapa (corte → … → expedição)
+```
+
+- Um **plano de produção** é constituído de vários **pedidos**; pedidos podem nascer avulsos e ser vinculados a um plano depois.
+- Cada pedido tem **itens** (modelo + quantidade); no detalhe do plano, o botão **"Gerar OP"** abre uma OP já pré-preenchida com o saldo pendente do item (pares pedidos − pares já em OP).
+- O progresso sobe na hierarquia: fichas concluídas → progresso da OP → progresso do pedido → progresso do plano (views `vw_pedidos_resumo`, `vw_planos_resumo`, `vw_pedido_itens_saldo`).
+
 ## Funcionalidades (MVP — Fase 1 + parte da Fase 2)
 
+- **Planos de Produção** — criação com período, vinculação de pedidos, acompanhamento consolidado (pares pedidos / em OP / concluídos) e ciclo aberto → em produção → concluído.
+- **Pedidos** — cadastro com cliente, canal (B2B/Representante/Marketplace), prazo, itens por modelo e indicação de atraso.
 - **Modelos/SKUs** — cadastro com marca (Safety Prado / Country Prado), linha e grade de numeração.
 - **Ordens de Produção** — abertura com geração automática de fichas (1 ou N lotes), numeração automática (`OP-2026-0001`, `F-000001`) e QR Code único por ficha.
 - **Impressão da ficha** — layout para impressão com QR Code, grade de numeração e quadro de apontamento manual (backup em papel).
@@ -28,6 +44,7 @@ Sistema independente para acompanhar a produção de calçados através da **fic
 gestao-producao/
 ├── supabase/
 │   ├── migrations/0001_schema_inicial.sql   # schema, regras, RLS, views, seeds de domínio
+│   ├── migrations/0002_planos_pedidos.sql   # hierarquia Plano → Pedido → OP
 │   └── seed.sql                             # dados de exemplo (opcional)
 ├── src/
 │   ├── lib/            # cliente Supabase + contexto de autenticação
@@ -41,7 +58,7 @@ gestao-producao/
 ### 1. Banco (Supabase)
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. No **SQL Editor**, execute `supabase/migrations/0001_schema_inicial.sql` (cria tabelas, função de apontamento, RLS, views e os seeds fixos: unidades, etapas e motivos de perda).
+2. No **SQL Editor**, execute as migrations em ordem: `supabase/migrations/0001_schema_inicial.sql` (tabelas, função de apontamento, RLS, views e seeds fixos: unidades, etapas e motivos de perda) e depois `supabase/migrations/0002_planos_pedidos.sql` (planos e pedidos).
 3. (Opcional) Execute `supabase/seed.sql` para dados de exemplo.
 4. Em **Authentication → Users**, crie os usuários (e-mail/senha). O perfil é criado automaticamente como `operador`; ajuste o papel na tabela `profiles` (`supervisor` para Ana Clara/Michael, `gestao` para Wesley).
 

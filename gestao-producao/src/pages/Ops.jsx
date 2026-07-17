@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const fmtData = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '—')
@@ -11,18 +11,21 @@ const rotuloStatus = {
 }
 
 export default function Ops() {
+  const [params, setParams] = useSearchParams()
   const [ops, setOps] = useState([])
   const [modelos, setModelos] = useState([])
   const [unidades, setUnidades] = useState([])
-  const [novaAberta, setNovaAberta] = useState(false)
+  const [pedidos, setPedidos] = useState([])
+  const [novaAberta, setNovaAberta] = useState(params.get('nova') === '1')
   const [erro, setErro] = useState(null)
   const [salvando, setSalvando] = useState(false)
 
-  const [modeloId, setModeloId] = useState('')
+  const [modeloId, setModeloId] = useState(params.get('modelo') ?? '')
+  const [pedidoId, setPedidoId] = useState(params.get('pedido') ?? '')
   const [unidadeId, setUnidadeId] = useState('')
   const [prazo, setPrazo] = useState('')
   const [numFichas, setNumFichas] = useState('1')
-  const [quantidade, setQuantidade] = useState('')
+  const [quantidade, setQuantidade] = useState(params.get('qtd') ?? '')
   const [grade, setGrade] = useState({}) // {"38": "40", ...}
 
   const modelo = modelos.find((m) => m.id === modeloId)
@@ -38,7 +41,7 @@ export default function Ops() {
   async function carregar() {
     const { data } = await supabase
       .from('ordens_producao')
-      .select('*, modelos(codigo, nome, marca), unidades(nome), fichas(id)')
+      .select('*, modelos(codigo, nome, marca), unidades(nome), fichas(id), pedidos(numero, cliente)')
       .order('created_at', { ascending: false })
       .limit(200)
     setOps(data ?? [])
@@ -48,6 +51,12 @@ export default function Ops() {
     carregar()
     supabase.from('modelos').select('*').eq('ativo', true).order('codigo').then(({ data }) => setModelos(data ?? []))
     supabase.from('unidades').select('*').order('id').then(({ data }) => setUnidades(data ?? []))
+    supabase
+      .from('pedidos')
+      .select('id, numero, cliente')
+      .eq('status', 'aberto')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setPedidos(data ?? []))
   }, [])
 
   async function criarOp(e) {
@@ -70,6 +79,7 @@ export default function Ops() {
         unidade_id: Number(unidadeId),
         quantidade_total: qtdTotal,
         prazo: prazo || null,
+        pedido_id: pedidoId || null,
       })
       .select()
       .single()
@@ -101,11 +111,13 @@ export default function Ops() {
 
     setNovaAberta(false)
     setModeloId('')
+    setPedidoId('')
     setQuantidade('')
     setGrade({})
     setNumFichas('1')
     setPrazo('')
     setSalvando(false)
+    setParams({})
     carregar()
   }
 
@@ -138,6 +150,17 @@ export default function Ops() {
                 <option value="">— selecionar —</option>
                 {unidades.map((u) => (
                   <option key={u.id} value={u.id}>{u.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Pedido atendido <span className="font-normal text-[--text-faint]">(opcional)</span>
+              </label>
+              <select className="input" value={pedidoId} onChange={(e) => setPedidoId(e.target.value)}>
+                <option value="">— sem pedido —</option>
+                {pedidos.map((p) => (
+                  <option key={p.id} value={p.id}>{p.numero} · {p.cliente}</option>
                 ))}
               </select>
             </div>
@@ -220,6 +243,7 @@ export default function Ops() {
             <tr className="bg-navy text-left text-warm">
               <th className="px-4 py-3 font-medium">OP</th>
               <th className="px-4 py-3 font-medium">Modelo</th>
+              <th className="px-4 py-3 font-medium">Pedido</th>
               <th className="px-4 py-3 font-medium">Unidade</th>
               <th className="px-4 py-3 font-medium text-right">Pares</th>
               <th className="px-4 py-3 font-medium text-right">Fichas</th>
@@ -239,6 +263,16 @@ export default function Ops() {
                   <div className="font-medium">{op.modelos?.codigo}</div>
                   <div className="text-xs text-[--text-muted]">{op.modelos?.nome}</div>
                 </td>
+                <td className="px-4 py-3">
+                  {op.pedidos ? (
+                    <>
+                      <div className="font-medium">{op.pedidos.numero}</div>
+                      <div className="text-xs text-[--text-muted]">{op.pedidos.cliente}</div>
+                    </>
+                  ) : (
+                    <span className="text-[--text-faint]">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">{op.unidades?.nome}</td>
                 <td className="px-4 py-3 text-right">{op.quantidade_total}</td>
                 <td className="px-4 py-3 text-right">{op.fichas?.length ?? 0}</td>
@@ -252,7 +286,7 @@ export default function Ops() {
             ))}
             {ops.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-[--text-muted]">
+                <td colSpan={8} className="px-4 py-8 text-center text-[--text-muted]">
                   Nenhuma OP aberta ainda.
                 </td>
               </tr>

@@ -6,6 +6,8 @@ const links = [
   { to: '/apontar', label: 'Apontar', papeis: ['operador', 'supervisor', 'gestao'] },
   { to: '/', label: 'Painel', papeis: ['supervisor', 'gestao'] },
   { to: '/dashboard', label: 'Dashboard', papeis: ['supervisor', 'gestao'] },
+  { to: '/planos', label: 'Planos', papeis: ['supervisor', 'gestao'] },
+  { to: '/pedidos', label: 'Pedidos', papeis: ['supervisor', 'gestao'] },
   { to: '/ops', label: 'OPs', papeis: ['supervisor', 'gestao'] },
   { to: '/modelos', label: 'Modelos', papeis: ['supervisor', 'gestao'] },
   { to: '/colaboradores', label: 'Equipe', papeis: ['supervisor', 'gestao'] },
