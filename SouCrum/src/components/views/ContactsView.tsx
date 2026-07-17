@@ -5,14 +5,15 @@ import { colorMap } from '../../theme'
 import { fmt } from '../../utils'
 import { CloseIcon, MailIcon, PhoneIcon } from '../icons'
 
+const gridCols = '2fr 1.4fr 1fr 0.9fr 0.9fr'
+
 function tagStyle(contact: Contact, dark: boolean): CSSProperties {
   const [bg, fg] = colorMap(contact.tag === 'Cliente' ? 'success' : 'warn', dark)
   return { fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: bg, color: fg }
 }
 
-export function ContactsView({ store, isMobile = false }: { store: CrmStore; isMobile?: boolean }) {
+export function ContactsView({ store }: { store: CrmStore }) {
   const dark = store.darkMode
-  const gridCols = isMobile ? '1fr auto' : '2fr 1.4fr 1fr 0.9fr 0.9fr'
   const q = store.contactSearch.toLowerCase()
   const filtered = store.contacts.filter((c) => (c.name + c.company).toLowerCase().includes(q))
   const selected = store.contacts.find((c) => c.id === store.selectedContactId) ?? null
@@ -35,14 +36,10 @@ export function ContactsView({ store, isMobile = false }: { store: CrmStore; isM
           }}
         >
           <span>Nome</span>
-          {!isMobile && <span>Empresa</span>}
+          <span>Empresa</span>
           <span>Tag</span>
-          {!isMobile && (
-            <>
-              <span>Status</span>
-              <span>Negócios</span>
-            </>
-          )}
+          <span>Status</span>
+          <span>Negócios</span>
         </div>
 
         {filtered.map((c) => {
@@ -59,21 +56,14 @@ export function ContactsView({ store, isMobile = false }: { store: CrmStore; isM
                 <div style={{ width: 32, height: 32, borderRadius: 9, background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
                   {c.initials}
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
-                  {isMobile && <div style={{ fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.company}</div>}
-                </div>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
               </div>
-              {!isMobile && <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.company}</span>}
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.company}</span>
               <span>
                 <span style={tagStyle(c, dark)}>{c.tag}</span>
               </span>
-              {!isMobile && (
-                <>
-                  <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.status}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>{dealsCount(c.id)}</span>
-                </>
-              )}
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{c.status}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>{dealsCount(c.id)}</span>
             </div>
           )
         })}
@@ -82,15 +72,13 @@ export function ContactsView({ store, isMobile = false }: { store: CrmStore; isM
       {selected && (
         <div
           style={{
-            position: isMobile ? 'fixed' : 'absolute',
+            position: 'absolute',
             top: 0,
             right: 0,
             bottom: 0,
-            left: isMobile ? 0 : undefined,
-            width: isMobile ? '100%' : 380,
-            zIndex: isMobile ? 60 : 1,
+            width: 380,
             background: 'var(--bg-card)',
-            borderRadius: isMobile ? 0 : 18,
+            borderRadius: 18,
             boxShadow: '-12px 0 32px -12px var(--shadow)',
             padding: 26,
             overflowY: 'auto',
@@ -104,7 +92,7 @@ export function ContactsView({ store, isMobile = false }: { store: CrmStore; isM
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700 }}>
                   {selected.initials}
                 </div>
-                <button onClick={() => store.selectContact(null)} aria-label="Fechar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
+                <button onClick={() => store.selectContact(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
                   <CloseIcon />
                 </button>
               </div>

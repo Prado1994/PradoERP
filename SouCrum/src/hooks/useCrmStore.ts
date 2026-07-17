@@ -22,7 +22,6 @@ export function useCrmStore() {
   const [currentView, setCurrentView] = useState<ViewId>('dashboard')
   const [darkMode, setDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [deals, setDeals] = useState<Deal[]>(initialDeals)
@@ -51,16 +50,9 @@ export function useCrmStore() {
       goTo(view: ViewId) {
         setCurrentView(view)
         setSelectedContactId(null)
-        setMobileNavOpen(false)
       },
       toggleSidebar() {
         setSidebarCollapsed((v) => !v)
-      },
-      openMobileNav() {
-        setMobileNavOpen(true)
-      },
-      closeMobileNav() {
-        setMobileNavOpen(false)
       },
       toggleDark() {
         setDarkMode((v) => !v)
@@ -138,7 +130,6 @@ export function useCrmStore() {
     currentView,
     darkMode,
     sidebarCollapsed,
-    mobileNavOpen,
     contacts,
     deals,
     emails,

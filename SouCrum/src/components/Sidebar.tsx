@@ -61,9 +61,8 @@ function navStyle(active: boolean): CSSProperties {
   }
 }
 
-export function Sidebar({ store, isMobile = false }: { store: CrmStore; isMobile?: boolean }) {
-  // On mobile the sidebar is a full-width drawer, never the collapsed icon rail.
-  const collapsed = isMobile ? false : store.sidebarCollapsed
+export function Sidebar({ store }: { store: CrmStore }) {
+  const collapsed = store.sidebarCollapsed
   const showLabels = !collapsed
   const unreadCount = store.emails.filter((e) => e.unread).length
 
@@ -203,11 +202,11 @@ export function Sidebar({ store, isMobile = false }: { store: CrmStore; isMobile
         </div>
 
         <div
-          onClick={isMobile ? store.closeMobileNav : store.toggleSidebar}
+          onClick={store.toggleSidebar}
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 8px', borderRadius: 10, cursor: 'pointer', color: 'var(--text-3)', marginTop: 2 }}
         >
           <ChevronLeftIcon style={{ transform: collapsed ? 'rotate(180deg)' : undefined }} />
-          {showLabels && <span style={{ fontSize: 12.5, fontWeight: 500, whiteSpace: 'nowrap' }}>{isMobile ? 'Fechar' : 'Recolher'}</span>}
+          {showLabels && <span style={{ fontSize: 12.5, fontWeight: 500, whiteSpace: 'nowrap' }}>Recolher</span>}
         </div>
       </div>
     </aside>
