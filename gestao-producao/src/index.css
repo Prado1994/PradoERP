@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #1C2632;
+  --blue: #2C3B4E;
+  --terra: #9F5234;
+  --yellow: #FEC761;
+  --beige: #CCC1A9;
+  --warm: #FFFCF4;
+  --bg: #F5F3EE;
+  --card: #ffffff;
+  --border: rgba(0, 0, 0, 0.09);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --text: #1a1a18;
+  --text-muted: #5c5b57;
+  --text-faint: #9a9890;
+  --radius: 12px;
+  --radius-sm: 7px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.card {
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  border-top: 3px solid var(--terra);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 100px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-estrategico { background: var(--navy); color: var(--yellow); }
+.badge-tatico      { background: var(--blue); color: var(--beige); }
+.badge-operacional { background: var(--terra); color: #fff; }
+
+.input {
+  @apply w-full rounded-[7px] border border-black/15 bg-white px-3 py-2.5 text-base outline-none focus:border-terra;
+}
+
+.btn-primary {
+  @apply rounded-[7px] bg-terra px-4 py-2.5 font-semibold text-warm transition hover:opacity-90 disabled:opacity-40;
+}
+
+.btn-secondary {
+  @apply rounded-[7px] bg-navy px-4 py-2.5 font-semibold text-yellow transition hover:opacity-90 disabled:opacity-40;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
