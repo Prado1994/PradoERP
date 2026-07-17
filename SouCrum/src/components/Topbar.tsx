@@ -1,12 +1,12 @@
 import type { CrmStore } from '../hooks/useCrmStore'
 import { viewTitles } from '../data'
-import { BellIcon, PlusIcon, SearchIcon } from './icons'
+import { BellIcon, MenuIcon, PlusIcon, SearchIcon } from './icons'
 
-export function Topbar({ store }: { store: CrmStore }) {
+export function Topbar({ store, isMobile = false }: { store: CrmStore; isMobile?: boolean }) {
   const view = store.currentView
   const [title, subtitle] = viewTitles[view] ?? ['', '']
 
-  const showSearch = view === 'contacts' || view === 'pipeline' || view === 'inbox'
+  const showSearch = (view === 'contacts' || view === 'pipeline' || view === 'inbox') && !isMobile
   const showPrimary = view === 'pipeline' || view === 'contacts'
 
   let searchPlaceholder = ''
@@ -34,16 +34,26 @@ export function Topbar({ store }: { store: CrmStore }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 18,
-        padding: '16px 28px',
+        gap: isMobile ? 12 : 18,
+        padding: isMobile ? '12px 14px' : '16px 28px',
         background: 'var(--bg-elevated)',
         borderBottom: '1px solid var(--border)',
         flexShrink: 0,
       }}
     >
+      {isMobile && (
+        <button
+          onClick={store.openMobileNav}
+          aria-label="Abrir menu"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-1)', padding: 4, display: 'flex', flexShrink: 0 }}
+        >
+          <MenuIcon />
+        </button>
+      )}
+
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.3px' }}>{title}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 1 }}>{subtitle}</div>
+        <div style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+        {!isMobile && <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 1 }}>{subtitle}</div>}
       </div>
 
       {showSearch && (
@@ -72,6 +82,7 @@ export function Topbar({ store }: { store: CrmStore }) {
       {showPrimary && (
         <button
           onClick={primaryFn}
+          aria-label={primaryLabel}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -79,22 +90,24 @@ export function Topbar({ store }: { store: CrmStore }) {
             background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            padding: '10px 18px',
+            padding: isMobile ? '10px' : '10px 18px',
             borderRadius: 999,
             fontWeight: 700,
             fontSize: 13.5,
             cursor: 'pointer',
+            flexShrink: 0,
             transition: 'opacity .15s ease',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >
           <PlusIcon />
-          {primaryLabel}
+          {!isMobile && primaryLabel}
         </button>
       )}
 
       <button
+        aria-label="Notificações"
         style={{
           background: 'none',
           border: '1px solid var(--border)',
@@ -103,6 +116,7 @@ export function Topbar({ store }: { store: CrmStore }) {
           cursor: 'pointer',
           color: 'var(--text-2)',
           position: 'relative',
+          flexShrink: 0,
         }}
       >
         <BellIcon />

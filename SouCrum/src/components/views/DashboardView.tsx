@@ -8,7 +8,7 @@ const cardStyle: React.CSSProperties = {
   borderRadius: 18,
 }
 
-export function DashboardView({ store }: { store: CrmStore }) {
+export function DashboardView({ store, isMobile = false }: { store: CrmStore; isMobile?: boolean }) {
   const dark = store.darkMode
   const green = dark ? '#5FD9A6' : '#2F8F63'
   const red = dark ? '#FF8FA3' : '#E0345A'
@@ -48,9 +48,16 @@ export function DashboardView({ store }: { store: CrmStore }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeUp .25s ease' }}>
       {/* KPI row */}
-      <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
+      <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)' }}>
         {kpis.map((kpi, i) => (
-          <div key={kpi.label} style={{ padding: '20px 22px', borderRight: i === kpis.length - 1 ? 'none' : '1px solid var(--border)' }}>
+          <div
+            key={kpi.label}
+            style={{
+              padding: isMobile ? '16px 18px' : '20px 22px',
+              borderRight: isMobile ? (i % 2 === 0 ? '1px solid var(--border)' : 'none') : i === kpis.length - 1 ? 'none' : '1px solid var(--border)',
+              borderBottom: isMobile && i < 2 ? '1px solid var(--border)' : 'none',
+            }}
+          >
             <div style={{ fontSize: 12.5, color: 'var(--text-3)', fontWeight: 600 }}>{kpi.label}</div>
             <div style={{ fontSize: 25, fontWeight: 800, color: 'var(--text-1)', marginTop: 8, letterSpacing: '-0.5px' }}>{kpi.value}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 12.5, fontWeight: 700, color: kpi.trendColor }}>
@@ -65,7 +72,7 @@ export function DashboardView({ store }: { store: CrmStore }) {
       </div>
 
       {/* Chart + pipeline */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: 18 }}>
         <div style={{ ...cardStyle, padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 2 }}>Negócios fechados por mês</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 20 }}>Últimos 6 meses</div>
