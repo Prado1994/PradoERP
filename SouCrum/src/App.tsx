@@ -16,7 +16,7 @@ export function App() {
   const placeholder = placeholderContent[view]
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-app)', ...cssVars(store.darkMode) }}>
+    <div style={{ display: 'flex', minHeight: '100vh', minWidth: 1024, background: 'var(--bg-app)', ...cssVars(store.darkMode) }}>
       <Sidebar store={store} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100vh', overflow: 'hidden' }}>
