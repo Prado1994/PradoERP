@@ -1,0 +1,47 @@
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text-1);
+  background: var(--bg-app);
+}
+
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+input, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+
+/* O brilho de fundo fica preso na viewport: rolar nao deve arrastar o gradiente. */
+.glow-fixed::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--bg-glow);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass {
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-card);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+
+.scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lift { transition: transform .16s ease, box-shadow .16s ease; }
+  .lift:hover { transform: translateY(-2px); }
+}
