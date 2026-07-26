@@ -1,0 +1,28 @@
+{
+  "name": "soucrum-mcp",
+  "version": "0.1.0",
+  "description": "Servidor MCP do SouCrum — expõe workspaces, projetos, tarefas, agenda e atividade para assistentes de IA",
+  "type": "module",
+  "bin": {
+    "soucrum-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
