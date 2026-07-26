@@ -1,0 +1,31 @@
+{
+  "//": "Claude Desktop — cole em claude_desktop_config.json e troque CAMINHO/chaves.",
+  "//_local": "macOS: ~/Library/Application Support/Claude/  |  Windows: %APPDATA%\\Claude\\",
+  "mcpServers": {
+    "soucrum": {
+      "command": "node",
+      "args": ["/CAMINHO/PradoERP/soucrum-mcp/dist/index.js"],
+      "env": {
+        "SOUCRUM_SUPABASE_URL": "https://sbyivwkcvjkropoforqx.supabase.co",
+        "SOUCRUM_SUPABASE_KEY": "sb_publishable_SUA_CHAVE",
+        "SOUCRUM_USER_JWT": "SEU_JWT_DE_USUARIO"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_TOKEN": "ntn_SEU_TOKEN_DE_INTEGRACAO"
+      }
+    },
+    "google-workspace": {
+      "//": "Calendar, Drive, Gmail. Requer OAuth do Google Cloud (ver clients/README.md).",
+      "command": "npx",
+      "args": ["-y", "@google/workspace-mcp"],
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "SEU_CLIENT_ID.apps.googleusercontent.com",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "SEU_CLIENT_SECRET"
+      }
+    }
+  }
+}

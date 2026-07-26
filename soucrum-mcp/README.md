@@ -62,7 +62,14 @@ Em `claude_desktop_config.json`:
 claude mcp add soucrum -- node /caminho/para/soucrum-mcp/dist/index.js
 ```
 
-## Ferramentas (15)
+## Usar junto com Notion e Google
+
+Clientes MCP conectam vários servidores ao mesmo tempo — o SouCrum roda **ao lado**
+do Notion e do Google Workspace, não dentro deles. Configurações prontas para
+Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
+**[`clients/`](clients/README.md)**.
+
+## Ferramentas (18)
 
 ### Leitura
 | Ferramenta | O que faz |
@@ -79,6 +86,8 @@ claude mcp add soucrum -- node /caminho/para/soucrum-mcp/dist/index.js
 | `recent_activity` | Feed de atividade (quem fez o quê) |
 | `unread_notifications` | Notificações não lidas |
 | `project_transactions` | Lançamentos de um projeto, com total somado |
+| `export_agenda_for_calendar` | Cartões com prazo no formato de evento do Google Calendar |
+| `export_project_markdown` | Projeto + cartões em Markdown (Notion / Google Docs) |
 
 ### Escrita (desativáveis via `SOUCRUM_READ_ONLY`)
 | Ferramenta | O que faz |
@@ -86,6 +95,7 @@ claude mcp add soucrum -- node /caminho/para/soucrum-mcp/dist/index.js
 | `create_task` | Cria cartão (tarefa, jot ou rotina) |
 | `update_task` | Atualiza cartão: status, prazo, responsável, agenda… |
 | `complete_routine` | Conclui o ciclo de uma rotina (grava `last_done`) |
+| `link_gcal_event` | Grava o `gcal_event_id` do evento criado no Google Calendar |
 
 ## Modelo de dados
 

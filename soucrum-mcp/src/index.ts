@@ -353,6 +353,117 @@ if (!READ_ONLY) {
   )
 }
 
+// -- Interoperabilidade: Google Calendar / Notion ------------------------------
+//
+// Estas ferramentas NÃO chamam as APIs do Google ou do Notion. Elas preparam os
+// dados no formato que os servidores MCP oficiais desses produtos esperam, e
+// guardam de volta os IDs devolvidos por eles. Assim o assistente combina os
+// servidores (SouCrum + Google Calendar + Notion) sem que este servidor precise
+// de credenciais de terceiros.
+
+server.tool(
+  'export_agenda_for_calendar',
+  'Exporta cartões com prazo como eventos prontos para criar no Google Calendar. Já indica quais ainda não foram sincronizados (gcal_event_id vazio). Depois de criar o evento, chame link_gcal_event para gravar o vínculo.',
+  {
+    from: z.string().optional().describe('Data inicial YYYY-MM-DD. Padrão: hoje'),
+    to: z.string().optional().describe('Data final YYYY-MM-DD'),
+    only_unsynced: z.boolean().optional().describe('Somente cartões sem evento no Calendar. Padrão: true'),
+  },
+  async ({ from, to, only_unsynced }) => {
+    let q = db
+      .from('objects')
+      .select('id, title, body, due_date, status, project_id, assignee, gcal_event_id')
+      .not('due_date', 'is', null)
+      .gte('due_date', from ?? today())
+      .order('due_date')
+    if (to) q = q.lte('due_date', to)
+    if (only_unsynced !== false) q = q.is('gcal_event_id', null)
+    const { data, error } = await q
+    if (error) return fail(error.message)
+
+    const events = (data ?? []).map((c) => ({
+      soucrum_task_id: c.id,
+      summary: c.title,
+      description: [c.body, `SouCrum · status: ${c.status}`].filter(Boolean).join('\n\n'),
+      // Evento de dia inteiro: `end` é exclusivo no Google Calendar.
+      start: { date: c.due_date },
+      end: { date: c.due_date },
+      already_synced: c.gcal_event_id !== null,
+    }))
+    return ok({ count: events.length, events })
+  },
+)
+
+if (!READ_ONLY) {
+  server.tool(
+    'link_gcal_event',
+    'Grava no cartão o ID do evento criado no Google Calendar, para não duplicar em sincronizações futuras.',
+    {
+      task_id: z.string().uuid(),
+      gcal_event_id: z.string().min(1).describe('ID devolvido pela API do Google Calendar'),
+    },
+    async ({ task_id, gcal_event_id }) => {
+      const { data, error } = await db
+        .from('objects')
+        .update({ gcal_event_id, updated_at: new Date().toISOString() })
+        .eq('id', task_id)
+        .select('id, title, due_date, gcal_event_id')
+        .single()
+      if (error) return fail(error.message)
+      return ok({ linked: data })
+    },
+  )
+}
+
+server.tool(
+  'export_project_markdown',
+  'Exporta um projeto inteiro (dados + cartões agrupados por status) em Markdown, pronto para virar página no Notion, Google Docs ou Drive.',
+  {
+    project_id: z.string().uuid(),
+    include_body: z.boolean().optional().describe('Incluir o corpo de cada cartão. Padrão: false'),
+  },
+  async ({ project_id, include_body }) => {
+    const { data: proj, error: e1 } = await db
+      .from('projects')
+      .select('name, description, deadline')
+      .eq('id', project_id)
+      .single()
+    if (e1) return fail(e1.message)
+
+    const { data: tasks, error: e2 } = await db
+      .from('objects')
+      .select('title, body, status, due_date, assignee, tags, checklist')
+      .eq('project_id', project_id)
+      .order('status')
+    if (e2) return fail(e2.message)
+
+    const grupos = new Map<string, typeof tasks>()
+    for (const t of tasks ?? []) {
+      if (!grupos.has(t.status)) grupos.set(t.status, [])
+      grupos.get(t.status)!.push(t)
+    }
+
+    const linhas: string[] = [`# ${proj.name}`, '']
+    if (proj.description) linhas.push(proj.description, '')
+    if (proj.deadline) linhas.push(`**Prazo:** ${proj.deadline}`, '')
+    for (const [status, itens] of grupos) {
+      linhas.push(`## ${status} (${itens!.length})`, '')
+      for (const t of itens!) {
+        const meta = [t.due_date && `prazo ${t.due_date}`, t.assignee && `resp. ${t.assignee}`]
+          .filter(Boolean)
+          .join(' · ')
+        linhas.push(`- **${t.title}**${meta ? ` — ${meta}` : ''}`)
+        if (include_body && t.body) linhas.push(`  ${t.body.replace(/\n/g, '\n  ')}`)
+        for (const item of (t.checklist as { text?: string; done?: boolean }[] | null) ?? []) {
+          if (item?.text) linhas.push(`  - [${item.done ? 'x' : ' '}] ${item.text}`)
+        }
+      }
+      linhas.push('')
+    }
+    return ok({ project: proj.name, task_count: tasks?.length ?? 0, markdown: linhas.join('\n') })
+  },
+)
+
 // -- Páginas (documentos) ------------------------------------------------------
 
 server.tool(
