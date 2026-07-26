@@ -13,6 +13,7 @@ export interface McpHealth {
   mode: 'read-only' | 'read-write'
   auth: string
   supabase: { url: string; reachable: boolean; latency_ms: number; error?: string }
+  notifications?: { slack: boolean; googleChat: boolean; teams: boolean; email: boolean }
   tool_count: number
   write_tool_count: number
   tools: McpToolInfo[]

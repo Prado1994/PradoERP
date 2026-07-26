@@ -46,7 +46,7 @@ curl -s http://127.0.0.1:7757/health | jq '{ok, version, mode, tool_count, supab
 ```
 
 ```json
-{ "ok": true, "version": "0.1.0", "mode": "read-write", "tool_count": 21,
+{ "ok": true, "version": "0.1.0", "mode": "read-write", "tool_count": 24,
   "supabase": { "reachable": true, "latency_ms": 84 } }
 ```
 
@@ -90,7 +90,28 @@ do Notion e do Google Workspace, não dentro deles. Configurações prontas para
 Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 **[`clients/`](clients/README.md)**.
 
-## Ferramentas (21)
+## Notificações
+
+Envia avisos para **Slack, Google Chat, Microsoft Teams e e-mail**. Cada canal só
+entra em ação se estiver configurado (ver `.env.example`), e recebe o formato
+nativo dele:
+
+| Canal | Formato | Como obter |
+|---|---|---|
+| Slack | Blocks (header + seção + botão) | App → Incoming Webhooks |
+| Google Chat | Texto com markdown | Espaço → Apps e integrações → Webhooks |
+| Teams | Adaptive Card | Canal → Workflows → "when a webhook request is received" |
+| E-mail | HTML + texto, via Resend | resend.com → API key + domínio verificado |
+
+> O Teams usa Adaptive Card porque os conectores do Office 365 foram
+> descontinuados; o gatilho atual é o do Power Automate / Workflows.
+
+**Falhas são isoladas:** se um canal cair, os outros seguem e o resultado vem
+canal por canal, com o status HTTP e o erro real — útil para achar webhook
+inválido. Em `SOUCRUM_READ_ONLY=true` as ferramentas de envio ficam desativadas,
+já que mandam mensagem para fora.
+
+## Ferramentas (24)
 
 ### Leitura
 | Ferramenta | O que faz |
@@ -111,6 +132,7 @@ Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 | `export_project_markdown` | Projeto + cartões em Markdown (Notion / Google Docs) |
 | `find_task_by_email` | Diz se um e-mail do Gmail já virou cartão (checagem anti-duplicata) |
 | `list_email_tasks` | Cartões originados de e-mail, com remetente e link da mensagem |
+| `notification_channels` | Quais canais de notificação estão prontos (sem revelar segredos) |
 
 ### Escrita (desativáveis via `SOUCRUM_READ_ONLY`)
 | Ferramenta | O que faz |
@@ -120,6 +142,8 @@ Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 | `complete_routine` | Conclui o ciclo de uma rotina (grava `last_done`) |
 | `link_gcal_event` | Grava o `gcal_event_id` do evento criado no Google Calendar |
 | `create_task_from_email` | Transforma e-mail do Gmail em cartão — **idempotente**, não duplica |
+| `send_notification` | Envia um aviso para Slack / Chat / Teams / e-mail |
+| `notify_overdue_summary` | Monta o resumo de atrasadas do banco e dispara nos canais |
 
 ## Modelo de dados
 
@@ -156,6 +180,7 @@ Depois de registrar, é só pedir em linguagem natural:
 - "Resuma o projeto ERP Prado"
 - "Crie uma tarefa 'Revisar contrato Curticouro' com prazo para sexta"
 - "O que mudou no SouCrum nas últimas 24h?"
+- "Envie o resumo das tarefas atrasadas no Slack e por e-mail para a equipe"
 
 ## Desenvolvimento
 

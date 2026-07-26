@@ -71,6 +71,17 @@ const servicos: { key: keyof McpServices; label: string; desc: string }[] = [
   { key: 'googleDrive', label: 'Google Drive', desc: 'Exportar projetos como documentos' },
 ]
 
+const canaisNotificacao: {
+  key: 'slack' | 'googleChat' | 'teams' | 'email'
+  label: string
+  env: string
+}[] = [
+  { key: 'slack', label: 'Slack', env: 'SOUCRUM_SLACK_WEBHOOK_URL' },
+  { key: 'googleChat', label: 'Google Chat', env: 'SOUCRUM_GOOGLE_CHAT_WEBHOOK_URL' },
+  { key: 'teams', label: 'Microsoft Teams', env: 'SOUCRUM_TEAMS_WEBHOOK_URL' },
+  { key: 'email', label: 'E-mail', env: 'SOUCRUM_RESEND_API_KEY + EMAIL_FROM/TO' },
+]
+
 export function McpSettings() {
   const { settings, update, toggleService, reset } = useMcpSettings()
   const [mostrarChave, setMostrarChave] = useState(false)
@@ -385,6 +396,71 @@ export function McpSettings() {
               <Toggle on={settings.services[s.key]} onClick={() => toggleService(s.key)} />
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Canais de notificação */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+          Canais de notificação
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.5 }}>
+          Para onde os avisos são enviados (ex.: resumo de tarefas atrasadas). Configure cada canal no
+          servidor MCP com as variáveis abaixo — o estado é lido do próprio servidor, então reflete o
+          que está valendo de verdade.
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {canaisNotificacao.map((c) => {
+            const pronto =
+              health.status === 'ok' ? Boolean(health.data.notifications?.[c.key]) : undefined
+            return (
+              <div
+                key={c.key}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '11px 4px',
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-1)' }}>{c.label}</div>
+                  <code style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{c.env}</code>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    background:
+                      pronto === undefined
+                        ? 'var(--bg-hover)'
+                        : pronto
+                          ? 'var(--accent-soft)'
+                          : 'var(--bg-hover)',
+                    color:
+                      pronto === undefined
+                        ? 'var(--text-3)'
+                        : pronto
+                          ? 'var(--accent-strong)'
+                          : 'var(--text-3)',
+                  }}
+                >
+                  {pronto === undefined ? 'Teste a conexão' : pronto ? 'Ativo' : 'Não configurado'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.5 }}>
+          O assistente envia com <code>send_notification</code> ou{' '}
+          <code>notify_overdue_summary</code>. Um canal que falhar não impede os outros — o resultado
+          vem por canal.
         </div>
       </div>
 

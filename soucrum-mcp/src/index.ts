@@ -14,6 +14,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import {
+  configuredChannels,
+  loadNotifyConfig,
+  notify,
+  type ChannelId,
+  type Notification,
+} from './notify.js'
 
 // ---------------------------------------------------------------------------
 // Cliente Supabase
@@ -94,6 +101,10 @@ const WRITE_TOOLS = new Set([
   'complete_routine',
   'link_gcal_event',
   'create_task_from_email',
+  // Enviam mensagem para fora — tratadas como escrita para respeitar o modo
+  // somente-leitura.
+  'send_notification',
+  'notify_overdue_summary',
 ])
 
 /** Catálogo das ferramentas registradas, exposto pelo endpoint /health. */
@@ -642,6 +653,95 @@ reg(
   },
 )
 
+// -- Notificações: Slack, Google Chat, Teams, e-mail ---------------------------
+
+const notifyConfig = loadNotifyConfig()
+const APP_URL = process.env.SOUCRUM_APP_URL?.trim() || 'https://soucrum.vercel.app'
+
+const channelSchema = z
+  .array(z.enum(['slack', 'googleChat', 'teams', 'email']))
+  .optional()
+  .describe('Canais de destino. Omitido = todos os configurados')
+
+reg(
+  'notification_channels',
+  'Mostra quais canais de notificação estão configurados (Slack, Google Chat, Teams, e-mail). Não revela webhooks nem chaves.',
+  {},
+  async () => {
+    const canais = configuredChannels(notifyConfig)
+    const prontos = Object.entries(canais).filter(([, v]) => v).map(([k]) => k)
+    return ok({
+      channels: canais,
+      ready: prontos,
+      email_recipients: notifyConfig.emailTo?.length ?? 0,
+      hint:
+        prontos.length === 0
+          ? 'Nenhum canal configurado. Defina SOUCRUM_SLACK_WEBHOOK_URL, SOUCRUM_GOOGLE_CHAT_WEBHOOK_URL, SOUCRUM_TEAMS_WEBHOOK_URL ou SOUCRUM_RESEND_API_KEY + SOUCRUM_EMAIL_FROM/TO.'
+          : undefined,
+    })
+  },
+)
+
+if (!READ_ONLY) {
+  reg(
+    'send_notification',
+    'Envia um aviso para os canais configurados (Slack, Google Chat, Teams, e-mail). Cada canal recebe o formato nativo dele; se um falhar, os outros seguem.',
+    {
+      title: z.string().min(1).describe('Título curto — vira o assunto do e-mail'),
+      body: z.string().min(1).describe('Corpo em texto. Uma linha por item funciona bem'),
+      link: z.string().optional().describe('Link de "abrir no SouCrum"'),
+      channels: channelSchema,
+    },
+    async ({ title, body, link, channels }) => {
+      const n: Notification = { title, body, link }
+      const r = await notify(n, notifyConfig, channels as ChannelId[] | undefined)
+      return ok(r)
+    },
+  )
+
+  reg(
+    'notify_overdue_summary',
+    'Monta o resumo das tarefas atrasadas direto do banco e envia para os canais escolhidos. Se não houver atrasadas, não envia nada.',
+    {
+      channels: channelSchema,
+      limit: z.number().int().min(1).max(50).optional().describe('Máximo de tarefas listadas. Padrão 15'),
+      project_id: z.string().uuid().optional().describe('Restringe a um projeto'),
+    },
+    async ({ channels, limit, project_id }) => {
+      const t = today()
+      let q = db
+        .from('objects')
+        .select('id, title, due_date, status, assignee, project_id, last_done')
+        .lt('due_date', t)
+        .order('due_date')
+        .limit(limit ?? 15)
+      if (project_id) q = q.eq('project_id', project_id)
+      const { data, error } = await q
+      if (error) return fail(error.message)
+
+      // Rotina cujo ciclo foi concluído hoje não é atraso.
+      const atrasadas = (data ?? []).filter((r) => r.last_done !== t)
+      if (atrasadas.length === 0) {
+        return ok({ sent: false, reason: 'nenhuma tarefa atrasada', results: [] })
+      }
+
+      const linhas = atrasadas.map((r) => {
+        const dias = Math.round((Date.parse(t) - Date.parse(r.due_date as string)) / 86_400_000)
+        const quem = r.assignee ? ` · ${r.assignee}` : ''
+        return `• ${r.title} — ${dias} ${dias === 1 ? 'dia' : 'dias'} de atraso${quem}`
+      })
+
+      const n: Notification = {
+        title: `SouCrum: ${atrasadas.length} ${atrasadas.length === 1 ? 'tarefa atrasada' : 'tarefas atrasadas'}`,
+        body: linhas.join('\n'),
+        link: APP_URL,
+      }
+      const r = await notify(n, notifyConfig, channels as ChannelId[] | undefined)
+      return ok({ sent: r.sent_count > 0, overdue_count: atrasadas.length, ...r })
+    },
+  )
+}
+
 // -- Páginas (documentos) ------------------------------------------------------
 
 reg(
@@ -818,6 +918,8 @@ function startHealthServer(port: number): void {
           mode: READ_ONLY ? 'read-only' : 'read-write',
           auth: USER_JWT ? 'user-jwt' : 'direct-key',
           supabase: { url: SUPABASE_URL, ...supabase },
+          // Só quais canais estão prontos — nunca os webhooks ou a chave.
+          notifications: configuredChannels(notifyConfig),
           tool_count: registeredTools.length,
           write_tool_count: registeredTools.filter((t) => t.write).length,
           tools: registeredTools,
