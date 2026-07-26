@@ -19,10 +19,21 @@ PradoERP/
     └── v6.1/         esquema completo do ambiente novo (ver README de lá)
 ```
 
-Além disso, o **app real** do usuário (o que está em `soucrum.vercel.app`, com
-login e dados de verdade) **não está neste repositório**. O que existe aqui em
-`SouCrum/` é o protótipo da nova UI, criado a partir do design
-`SouCrum_CRM.dc.html`.
+## O que o SouCrum é
+
+Um **app de gestão de projetos, foco e rotinas**, com banco no Supabase.
+Confirmado pelo dono do projeto e batendo com o modelo de dados: `objects` no
+fluxo jot→extracted→refined→scheduled, rotinas com `recurrence`/`last_done`,
+pomodoro (`pom_est`/`pom_done`), matriz de Eisenhower, workspaces com membros,
+páginas e lançamentos.
+
+O nome tem "Crum", não "CRM". **Não é um CRM** — não há contatos, negócios nem
+pipeline de vendas no produto. Se algum arquivo aqui sugerir isso, é resíduo do
+protótipo e está errado.
+
+Além disso, o **app real** (o que está em `soucrum.vercel.app`, com login e dados
+de verdade) **não está neste repositório**. O que existe aqui em `SouCrum/` é um
+protótipo de UI criado a partir de um design estático.
 
 ### ⚠️ Como o app real é publicado
 
@@ -42,14 +53,19 @@ Directory vazio** — e não existe app web na raiz do repositório.
 > aconteceu e substituiu o front de produção. O banco não foi afetado.
 > Se precisar publicar o protótipo, crie um projeto Vercel novo.
 
-### O protótipo não é o app real
+### O protótipo em `SouCrum/` não serve como app
 
-Vale dizer com clareza: o modelo de dados do banco (`objects` com fluxo
-jot→scheduled, rotinas, pomodoro, eisenhower, workspaces, páginas, transações)
-é de um **gestor de tarefas e projetos**. O protótipo em `SouCrum/` é um **CRM**
-(contatos, negócios, pipeline, caixa de entrada). São aplicações diferentes —
-aplicar a UI nova no app real é levar os tokens de tema e os ajustes de
-componente para o código dele, não publicar esta pasta.
+Ele foi montado a partir de um design estático e ficou com telas que **não
+existem no SouCrum** (contatos, pipeline, caixa de entrada) e dados fictícios no
+lugar do Supabase. É protótipo visual, não o produto.
+
+O que vale dele é o **sistema visual**: tokens de cor, tipografia, raios, sombras
+e os ajustes de componente. Aplicar o visual novo no app real é levar esses
+tokens para o código dele — não publicar esta pasta.
+
+Para virar app de verdade, as telas teriam que ser refeitas em cima do modelo
+real: agenda de hoje, quadro por status, rotinas, projetos, páginas, foco
+(pomodoro). Não fiz isso ainda.
 
 ---
 

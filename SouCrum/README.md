@@ -1,11 +1,17 @@
-# SouCrum
+# SouCrum — protótipo de UI
 
-CRM leve para gestão de **contatos, negócios e comunicação** — construído a
-partir do protótipo de design `SouCrum_CRM.dc.html` e reimplementado como um
-app web real em **React + Vite + TypeScript**.
+> ⚠️ **Isto não é o SouCrum.** O SouCrum é um app de **gestão de projetos, foco e
+> rotinas**, com banco no Supabase, e o código dele não está neste repositório.
+>
+> Esta pasta é um **protótipo visual** feito a partir de um design estático. As
+> telas aqui (contatos, pipeline, caixa de entrada) **não existem no produto**, e
+> os dados são fictícios — não há Supabase ligado.
+>
+> O que presta aqui é o sistema visual: tokens de cor, tipografia, raios, sombras
+> e o comportamento de claro/escuro. Use como referência de estilo, não como base
+> funcional.
 
-<!-- Screenshots ficam em outro chat; a UI cobre Painel, Caixa de Entrada,
-     Quadro (kanban), Contatos, Configurações e modo claro/escuro. -->
+Implementado em **React + Vite + TypeScript**, sem biblioteca de componentes.
 
 ## Como rodar
 

@@ -3,7 +3,7 @@
   "private": true,
   "version": "6.1.0",
   "type": "module",
-  "description": "SouCrum — CRM leve para gestão de contatos, negócios e comunicação",
+  "description": "Protótipo visual de UI (nao e o app SouCrum, que e gestao de projetos, foco e rotinas)",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
