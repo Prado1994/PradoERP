@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--violet,#7C6AFA)}
+  a:hover{color:var(--accent-strong,#E0345A)}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(120,90,70,.22);border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+<div style="{{ rootVars }}">
+  <aside style="width:{{ sidebarWidthPx }}px;flex-shrink:0;background:var(--bg-elevated);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 0 16px;height:100vh;overflow:hidden;transition:width .18s ease">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0;padding:0 16px;margin-bottom:20px">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--violet);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">S</div>
+      <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}">
+        <span style="font-weight:800;font-size:16.5px;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;color:var(--text-1)">SouCrum</span>
+      </sc-if>
+    </div>
+    <div style="margin:0 16px 14px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:9px;cursor:pointer;background:var(--bg-app);transition:background .15s ease" style-hover="background:var(--bg-hover)">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--violet);flex-shrink:0"></span>
+      <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}">
+        <span style="font-size:12.5px;font-weight:600;color:var(--text-1);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Minha Empresa</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);flex-shrink:0"><path d="M6 9l6 6 6-6"></path></svg>
+      </sc-if>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:1px;flex:1;overflow-y:auto;overflow-x:hidden">
+      <div onClick="{{ goInbox }}" style="{{ navInboxStyle }}" style-hover="{{ navInboxHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap;flex:1">Caixa de Entrada</span></sc-if>
+        <sc-if value="{{ hasUnreadEmails }}" hint-placeholder-val="{{ false }}">
+          <span style="{{ unreadBadgeStyle }}">{{ unreadCount }}</span>
+        </sc-if>
+      </div>
+      <div onClick="{{ goHoje }}" style="{{ navHojeStyle }}" style-hover="{{ navHojeHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Hoje</span></sc-if>
+      </div>
+      <div onClick="{{ goPipeline }}" style="{{ navPipelineStyle }}" style-hover="{{ navPipelineHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3.5" y="4" width="4.5" height="16" rx="1.2"></rect><rect x="9.75" y="4" width="4.5" height="10" rx="1.2"></rect><rect x="16" y="4" width="4.5" height="13" rx="1.2"></rect></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Quadro</span></sc-if>
+      </div>
+      <div onClick="{{ goProjetos }}" style="{{ navProjetosStyle }}" style-hover="{{ navProjetosHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Projetos</span></sc-if>
+      </div>
+      <div onClick="{{ goDocumentos }}" style="{{ navDocumentosStyle }}" style-hover="{{ navDocumentosHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path><path d="M14 3v5h5"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Documentos</span></sc-if>
+      </div>
+      <div onClick="{{ goMateriais }}" style="{{ navMateriaisStyle }}" style-hover="{{ navMateriaisHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 8l9-5 9 5-9 5-9-5z"></path><path d="M3 8v9l9 5 9-5V8"></path><path d="M12 13v9"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Materiais</span></sc-if>
+      </div>
+      <div onClick="{{ goDashboard }}" style="{{ navDashboardStyle }}" style-hover="{{ navDashboardHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 20V11"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Meu Painel</span></sc-if>
+      </div>
+      <div onClick="{{ goCalendario }}" style="{{ navCalendarioStyle }}" style-hover="{{ navCalendarioHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Calendário</span></sc-if>
+      </div>
+      <div onClick="{{ goFoco }}" style="{{ navFocoStyle }}" style-hover="{{ navFocoHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none"></circle></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Foco</span></sc-if>
+      </div>
+      <div onClick="{{ goRelatorios }}" style="{{ navRelatoriosStyle }}" style-hover="{{ navRelatoriosHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 16l6-6 4 4 6-8"></path><path d="M14 6h6v6"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Relatórios</span></sc-if>
+      </div>
+      <div onClick="{{ goRotinas }}" style="{{ navRotinasStyle }}" style-hover="{{ navRotinasHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 4v5h5"></path><path d="M20 20v-5h-5"></path><path d="M5 15a8 8 0 0 0 14.3 3.5M19 9A8 8 0 0 0 4.7 5.5"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Rotinas</span></sc-if>
+      </div>
+      <div onClick="{{ goSettings }}" style="{{ navSettingsStyle }}" style-hover="{{ navSettingsHoverStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5v3M12 18.5v3M4.2 4.9l2.1 2.1M17.7 17l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.1l2.1-2.1M17.7 7l2.1-2.1"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="white-space:nowrap">Configurações</span></sc-if>
+      </div>
+    </nav>
+    <div style="padding:14px 16px 0;border-top:1px solid var(--border);margin-top:10px">
+      <div onClick="{{ toggleDark }}" style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;cursor:pointer;color:var(--text-2);transition:background .15s ease" style-hover="background:var(--bg-hover)">
+        <sc-if value="{{ isDark }}" hint-placeholder-val="{{ false }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        </sc-if>
+        <sc-if value="{{ isLight }}" hint-placeholder-val="{{ true }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"></path></svg>
+        </sc-if>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="font-size:13.5px;font-weight:500;white-space:nowrap">{{ themeLabel }}</span></sc-if>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 8px">
+        <div style="width:30px;height:30px;border-radius:9px;background:var(--violet-soft);color:var(--violet);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0">VC</div>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}">
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Você</div>
+            <div style="font-size:11.5px;color:var(--text-3);white-space:nowrap">Admin</div>
+          </div>
+        </sc-if>
+      </div>
+      <div onClick="{{ toggleSidebar }}" style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;cursor:pointer;color:var(--text-3);margin-top:2px;transition:background .15s ease" style-hover="background:var(--bg-hover)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="{{ collapseIconStyle }};flex-shrink:0"><path d="M15 6l-6 6 6 6"></path></svg>
+        <sc-if value="{{ showSidebarLabels }}" hint-placeholder-val="{{ true }}"><span style="font-size:12.5px;font-weight:500;white-space:nowrap">Recolher</span></sc-if>
+      </div>
+    </div>
+  </aside>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden">
+    <header style="display:flex;align-items:center;gap:18px;padding:16px 28px;background:var(--bg-elevated);border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="min-width:0">
+        <div style="font-size:19px;font-weight:800;color:var(--text-1);letter-spacing:-0.3px">{{ topbarTitle }}</div>
+        <div style="font-size:12.5px;color:var(--text-3);margin-top:1px">{{ topbarSubtitle }}</div>
+      </div>
+      <sc-if value="{{ showSearch }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;max-width:420px;position:relative;margin-left:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-3)"><circle cx="10" cy="10" r="6"></circle><path d="M20 20l-5-5"></path></svg>
+          <input value="{{ searchValue }}" onChange="{{ onSearchChange }}" placeholder="{{ searchPlaceholder }}" style="width:100%;padding:9px 14px 9px 36px;border-radius:11px;border:1px solid var(--border);background:var(--bg-app);color:var(--text-1);font-size:13.5px;font-family:inherit;outline:none"/>
+        </div>
+      </sc-if>
+      <div style="flex:1"></div>
+      <sc-if value="{{ showPrimaryAction }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ primaryActionFn }}" style="display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;transition:opacity .15s ease" style-hover="opacity:0.85">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          {{ primaryActionLabel }}
+        </button>
+      </sc-if>
+      <button style="background:none;border:1px solid var(--border);border-radius:11px;padding:9px;cursor:pointer;color:var(--text-2);position:relative;transition:background .15s ease" style-hover="background:var(--bg-hover)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>
+        <span style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--bg-elevated)"></span>
+      </button>
+    </header>
+
+    <main style="flex:1;overflow:auto;padding:26px 30px;background:var(--bg-app)">
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:20px;animation:fadeUp .25s ease">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px">
+            <sc-for list="{{ kpis }}" as="kpi" hint-placeholder-count="4">
+              <div style="padding:20px 22px;border-right:{{ kpi.divider }}">
+                <div style="font-size:12.5px;color:var(--text-3);font-weight:600">{{ kpi.label }}</div>
+                <div style="font-size:25px;font-weight:800;color:var(--text-1);margin-top:8px;letter-spacing:-0.5px">{{ kpi.value }}</div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:12.5px;font-weight:700;color:{{ kpi.trendColor }}">
+                  <svg width="9" height="10" viewBox="0 0 10 10"><path d="{{ kpi.arrowPath }}" fill="currentColor"></path></svg>
+                  <span>{{ kpi.trendLabel }}</span>
+                  <span style="color:var(--text-3);font-weight:500">vs. mês ant.</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:18px">
+            <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px;display:flex;flex-direction:column">
+              <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:2px">Negócios fechados por mês</div>
+              <div style="font-size:12.5px;color:var(--text-3);margin-bottom:20px">Últimos 6 meses</div>
+              <div style="display:flex;align-items:flex-end;gap:16px;height:170px;flex:1">
+                <sc-for list="{{ monthlyChart }}" as="m" hint-placeholder-count="6">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;height:100%;justify-content:flex-end">
+                    <div style="font-size:11.5px;font-weight:700;color:var(--text-2)">{{ m.value }}</div>
+                    <div style="width:100%;max-width:38px;height:{{ m.heightPct }}%;background:{{ m.barColor }};border-radius:8px 8px 4px 4px"></div>
+                    <div style="font-size:11.5px;color:var(--text-3);font-weight:600">{{ m.month }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:22px">
+              <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:16px">Pipeline por estágio</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ stageSummary }}" as="s" hint-placeholder-count="5">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px">
+                      <span style="font-weight:600;color:var(--text-1)">{{ s.name }}</span>
+                      <span style="color:var(--text-3);font-weight:600">{{ s.count }}</span>
+                    </div>
+                    <div style="height:7px;border-radius:5px;background:var(--bg-hover);overflow:hidden">
+                      <div style="height:100%;width:{{ s.pct }}%;background:{{ s.color }};border-radius:5px"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px">
+            <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:18px">Atividade recente</div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex;gap:14px">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                    <span style="width:8px;height:8px;border-radius:50%;background:{{ a.dotColor }};margin-top:4px;flex-shrink:0"></span>
+                    <span style="{{ a.lineStyle }}"></span>
+                  </div>
+                  <div style="flex:1;padding-bottom:18px;min-width:0">
+                    <div style="display:flex;justify-content:space-between;gap:10px">
+                      <span style="font-size:13.5px;color:var(--text-1)">{{ a.text }}</span>
+                      <span style="font-size:12px;color:var(--text-3);white-space:nowrap;flex-shrink:0">{{ a.time }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:0;height:100%;background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;overflow:hidden;animation:fadeUp .25s ease">
+          <div style="width:340px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto">
+            <sc-for list="{{ filteredEmails }}" as="em" hint-placeholder-count="5">
+              <div onClick="{{ em.onSelect }}" style="{{ em.rowStyle }}" style-hover="background:var(--bg-hover)">
+                <div style="width:38px;height:38px;border-radius:11px;background:{{ em.avatarBg }};color:{{ em.avatarColor }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">{{ em.initials }}</div>
+                <div style="min-width:0;flex:1">
+                  <div style="display:flex;justify-content:space-between;gap:6px">
+                    <span style="font-size:13.5px;color:var(--text-1);font-weight:{{ em.nameWeight }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ em.contactName }}</span>
+                    <span style="font-size:11px;color:var(--text-3);flex-shrink:0">{{ em.time }}</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);font-weight:{{ em.nameWeight }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">{{ em.subject }}</div>
+                  <div style="font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">{{ em.preview }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+            <sc-if value="{{ hasSelectedEmail }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:22px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px">
+                <div style="width:42px;height:42px;border-radius:12px;background:{{ selectedEmail.avatarBg }};color:{{ selectedEmail.avatarColor }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">{{ selectedEmail.initials }}</div>
+                <div style="min-width:0">
+                  <div style="font-size:16px;font-weight:800;color:var(--text-1)">{{ selectedEmail.subject }}</div>
+                  <div style="font-size:12.5px;color:var(--text-3);margin-top:2px">{{ selectedEmail.contactName }} · {{ selectedEmail.company }}</div>
+                </div>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ selectedEmail.thread }}" as="msg" hint-placeholder-count="2">
+                  <div style="max-width:72%;align-self:{{ msg.align }}">
+                    <div style="background:{{ msg.bg }};color:{{ msg.color }};padding:13px 16px;border-radius:15px;font-size:13.5px;line-height:1.55">{{ msg.text }}</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:5px;text-align:{{ msg.align }}">{{ msg.name }} · {{ msg.time }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:18px 26px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end">
+                <textarea value="{{ composeText }}" onChange="{{ onComposeChange }}" placeholder="Escreva uma resposta..." rows="2" style="flex:1;resize:none;border:1px solid var(--border);border-radius:14px;padding:11px 14px;font-family:inherit;font-size:13.5px;background:var(--bg-app);color:var(--text-1);outline:none"></textarea>
+                <button onClick="{{ sendReply }}" style="background:var(--accent);color:#fff;border:none;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity .15s ease" style-hover="opacity:0.85">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l18-8-8 18-2-8-8-2z"></path></svg>
+                </button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPipeline }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:16px;overflow-x:auto;height:100%;padding-bottom:8px;animation:fadeUp .25s ease">
+          <sc-for list="{{ dealsByStage }}" as="stage" hint-placeholder-count="5">
+            <div onDragOver="{{ stage.onDragOver }}" onDragLeave="{{ stage.onDragLeave }}" onDrop="{{ stage.onDrop }}" style="{{ stage.columnStyle }}">
+              <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 14px">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ stage.color }};flex-shrink:0"></span>
+                <span style="font-weight:700;font-size:13.5px;color:var(--text-1);flex:1">{{ stage.name }}</span>
+                <span style="font-size:11.5px;font-weight:700;color:var(--text-3);background:var(--bg-hover);padding:2px 8px;border-radius:20px">{{ stage.count }}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-3);font-weight:600;padding:0 6px 12px">{{ stage.totalFormatted }}</div>
+              <div style="display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;padding:0 2px 4px">
+                <sc-for list="{{ stage.deals }}" as="deal" hint-placeholder-count="2">
+                  <div draggable="true" onDragStart="{{ deal.onDragStart }}" onDragEnd="{{ deal.onDragEnd }}" style="{{ deal.cardStyle }}" style-hover="{{ deal.cardHoverStyle }}">
+                    <div style="font-weight:700;font-size:13.5px;color:var(--text-1)">{{ deal.company }}</div>
+                    <div style="font-size:12px;color:var(--text-3);margin-top:2px">{{ deal.title }}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                      <span style="font-size:13px;font-weight:800;color:var(--accent-strong)">{{ deal.valueFormatted }}</span>
+                      <span style="width:26px;height:26px;border-radius:8px;background:{{ deal.avatarBg }};color:{{ deal.avatarColor }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700">{{ deal.initials }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isContacts }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;height:100%;animation:fadeUp .25s ease">
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 0.9fr 0.9fr;padding:14px 22px;border-bottom:1px solid var(--border);font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em">
+              <span>Nome</span><span>Empresa</span><span>Tag</span><span>Status</span><span>Negócios</span>
+            </div>
+            <sc-for list="{{ filteredContacts }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.onSelect }}" style="display:grid;grid-template-columns:2fr 1.4fr 1fr 0.9fr 0.9fr;align-items:center;padding:14px 22px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s ease" style-hover="background:var(--bg-hover)">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                  <div style="width:32px;height:32px;border-radius:9px;background:{{ c.avatarBg }};color:{{ c.avatarColor }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">{{ c.initials }}</div>
+                  <span style="font-size:13.5px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span>
+                </div>
+                <span style="font-size:13px;color:var(--text-2)">{{ c.company }}</span>
+                <span><span style="{{ c.tagStyle }}">{{ c.tag }}</span></span>
+                <span style="font-size:13px;color:var(--text-2)">{{ c.status }}</span>
+                <span style="font-size:13px;color:var(--text-2);font-weight:600">{{ c.dealsCount }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hasSelectedContact }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:0;right:0;bottom:0;width:380px;background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;box-shadow:-12px 0 32px -12px var(--shadow);padding:26px;overflow-y:auto;animation:slideIn .2s ease">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div style="width:52px;height:52px;border-radius:14px;background:{{ selectedContact.avatarBg }};color:{{ selectedContact.avatarColor }};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">{{ selectedContact.initials }}</div>
+                <button onClick="{{ closeContact }}" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:4px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
+              </div>
+              <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-top:14px">{{ selectedContact.name }}</div>
+              <div style="font-size:13px;color:var(--text-3);margin-top:2px">{{ selectedContact.company }}</div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <span style="{{ selectedContact.tagStyle }}">{{ selectedContact.tag }}</span>
+                <span style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--bg-hover);padding:4px 10px;border-radius:20px">{{ selectedContact.status }}</span>
+              </div>
+              <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-2)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+                  {{ selectedContact.email }}
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-2)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l2 5-2.5 2.5a12 12 0 0 0 6 6L17 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"></path></svg>
+                  {{ selectedContact.phone }}
+                </div>
+              </div>
+              <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
+                <div style="font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:10px">Negócios associados</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ selectedContact.deals }}" as="d" hint-placeholder-count="2">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg-hover);border-radius:11px">
+                      <span style="font-size:12.5px;color:var(--text-1);font-weight:600">{{ d.title }}</span>
+                      <span style="font-size:12.5px;color:var(--accent-strong);font-weight:700">{{ d.valueFormatted }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px;max-width:760px;animation:fadeUp .25s ease">
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px">
+            <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:16px">Perfil</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:6px">Nome</div>
+                <div style="padding:10px 13px;border:1px solid var(--border);border-radius:11px;font-size:13.5px;color:var(--text-1);background:var(--bg-app)">Você</div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:6px">E-mail</div>
+                <div style="padding:10px 13px;border:1px solid var(--border);border-radius:11px;font-size:13.5px;color:var(--text-1);background:var(--bg-app)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0f79606c6a4f7c607a6c7d7a62216c6062">[email&#160;protected]</a></div>
+              </div>
+              <div style="grid-column:1/3">
+                <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:6px">Empresa</div>
+                <div style="padding:10px 13px;border:1px solid var(--border);border-radius:11px;font-size:13.5px;color:var(--text-1);background:var(--bg-app)">SouCrum</div>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="font-size:15px;font-weight:700;color:var(--text-1)">Equipe</div>
+              <button onClick="{{ addMember }}" style="background:var(--accent-soft);color:var(--accent-strong);border:none;padding:8px 16px;border-radius:999px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;transition:filter .15s ease" style-hover="filter:brightness(0.95)">+ Convidar</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ team }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)">
+                  <div style="width:34px;height:34px;border-radius:10px;background:{{ m.avatarBg }};color:{{ m.avatarColor }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0">{{ m.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13.5px;font-weight:700;color:var(--text-1)">{{ m.name }}</div>
+                    <div style="font-size:12px;color:var(--text-3)">{{ m.email }}</div>
+                  </div>
+                  <span style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--bg-hover);padding:4px 12px;border-radius:20px">{{ m.role }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px">
+            <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:16px">Notificações</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ notifSettings }}" as="n" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid var(--border)">
+                  <div>
+                    <div style="font-size:13.5px;font-weight:600;color:var(--text-1)">{{ n.label }}</div>
+                    <div style="font-size:12px;color:var(--text-3);margin-top:2px">{{ n.desc }}</div>
+                  </div>
+                  <div onClick="{{ n.toggle }}" style="{{ n.trackStyle }}">
+                    <div style="{{ n.knobStyle }}"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:var(--card-border);box-shadow:var(--card-shadow);border-radius:18px;padding:24px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--text-1)">Plano Pro</div>
+              <div style="font-size:12.5px;color:var(--text-3);margin-top:4px">1.240 de 2.000 contatos utilizados</div>
+              <div style="width:220px;height:7px;border-radius:5px;background:var(--bg-hover);margin-top:10px;overflow:hidden">
+                <div style="width:62%;height:100%;background:var(--accent);border-radius:5px"></div>
+              </div>
+            </div>
+            <button style="background:var(--text-1);color:var(--bg-card);border:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;transition:opacity .15s ease" style-hover="opacity:0.85">Gerenciar plano</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPlaceholder }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:10px;animation:fadeUp .25s ease">
+          <div style="font-size:40px">{{ placeholderEmoji }}</div>
+          <div style="font-size:16px;font-weight:800;color:var(--text-1)">{{ placeholderTitle }}</div>
+          <div style="font-size:13.5px;color:var(--text-3);max-width:320px;line-height:1.5">{{ placeholderSubtitle }}</div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+
+</x-dc>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    currentView: 'dashboard',
+    darkMode: false,
+    sidebarCollapsed: false,
+    selectedEmailId: 'e1',
+    selectedContactId: null,
+    contactSearch: '',
+    dealSearch: '',
+    emailSearch: '',
+    composeText: '',
+    draggedDealId: null,
+    dragOverStage: null,
+    notifEmail: true,
+    notifDeals: true,
+    notifWeekly: false,
+    contacts: [
+      {id:'c1', name:'Marina Alves', company:'TechNova', email:'marina@technova.com', phone:'(11) 98221-4400', tag:'Cliente', status:'Ativo', initials:'MA', color:'accent'},
+      {id:'c2', name:'Rafael Souza', company:'Bytewave', email:'rafael@bytewave.io', phone:'(11) 97711-2288', tag:'Lead', status:'Novo', initials:'RS', color:'info'},
+      {id:'c3', name:'Camila Rocha', company:'Órbita Digital', email:'camila@orbita.co', phone:'(21) 98844-1120', tag:'Cliente', status:'Ativo', initials:'CR', color:'violet'},
+      {id:'c4', name:'Diego Martins', company:'Fluxo Log', email:'diego@fluxolog.com', phone:'(31) 99022-7731', tag:'Lead', status:'Contato', initials:'DM', color:'warn'},
+      {id:'c5', name:'Juliana Prado', company:'Vértice Software', email:'juliana@vertice.dev', phone:'(11) 96633-0091', tag:'Cliente', status:'Ativo', initials:'JP', color:'success'},
+      {id:'c6', name:'Bruno Teixeira', company:'NimbusCloud', email:'bruno@nimbuscloud.com', phone:'(41) 98120-5567', tag:'Lead', status:'Proposta', initials:'BT', color:'info'},
+      {id:'c7', name:'Larissa Nunes', company:'Horizonte Pay', email:'larissa@horizontepay.com', phone:'(51) 99345-8820', tag:'Cliente', status:'Ativo', initials:'LN', color:'accent'},
+      {id:'c8', name:'Pedro Lima', company:'Cursor Data', email:'pedro@cursordata.ai', phone:'(19) 98876-3312', tag:'Lead', status:'Novo', initials:'PL', color:'warn'},
+    ],
+    deals: [
+      {id:'d1', company:'TechNova', title:'Plano Enterprise', contactId:'c1', stageId:'fechado', value:48000, initials:'MA', color:'accent'},
+      {id:'d2', company:'Bytewave', title:'Onboarding inicial', contactId:'c2', stageId:'novo', value:12000, initials:'RS', color:'info'},
+      {id:'d3', company:'Órbita Digital', title:'Upgrade anual', contactId:'c3', stageId:'negociacao', value:32000, initials:'CR', color:'violet'},
+      {id:'d4', company:'Fluxo Log', title:'Plano Pro', contactId:'c4', stageId:'contato', value:18000, initials:'DM', color:'warn'},
+      {id:'d5', company:'Vértice Software', title:'Renovação anual', contactId:'c5', stageId:'fechado', value:27000, initials:'JP', color:'success'},
+      {id:'d6', company:'NimbusCloud', title:'Plano Team', contactId:'c6', stageId:'proposta', value:22000, initials:'BT', color:'info'},
+      {id:'d7', company:'Horizonte Pay', title:'Plano Enterprise', contactId:'c7', stageId:'negociacao', value:54000, initials:'LN', color:'accent'},
+      {id:'d8', company:'Cursor Data', title:'Trial para pago', contactId:'c8', stageId:'novo', value:9000, initials:'PL', color:'warn'},
+      {id:'d9', company:'TechNova', title:'Add-on de API', contactId:'c1', stageId:'proposta', value:15000, initials:'MA', color:'accent'},
+      {id:'d10', company:'Bytewave', title:'Plano Team', contactId:'c2', stageId:'contato', value:20000, initials:'RS', color:'info'},
+      {id:'d11', company:'Órbita Digital', title:'Novo módulo', contactId:'c3', stageId:'novo', value:17000, initials:'CR', color:'violet'},
+      {id:'d12', company:'Vértice Software', title:'Expansão de licenças', contactId:'c5', stageId:'contato', value:24000, initials:'JP', color:'success'},
+    ],
+    emails: [
+      {id:'e1', contactId:'c1', contactName:'Marina Alves', company:'TechNova', subject:'Dúvida sobre fatura de julho', preview:'Oi, tudo bem? Recebi a fatura mas está com um valor diferente...', time:'09:42', unread:true, initials:'MA', color:'accent',
+        thread:[{fromMe:false,name:'Marina Alves',text:'Oi, tudo bem? Recebi a fatura mas está com um valor diferente do combinado, pode verificar?',time:'09:40'},{fromMe:false,name:'Marina Alves',text:'Fico no aguardo, obrigada!',time:'09:42'}]},
+      {id:'e2', contactId:'c2', contactName:'Rafael Souza', company:'Bytewave', subject:'Podemos agendar uma call?', preview:'Gostaria de entender melhor os planos disponíveis...', time:'08:15', unread:true, initials:'RS', color:'info',
+        thread:[{fromMe:false,name:'Rafael Souza',text:'Gostaria de entender melhor os planos disponíveis para nosso time de 12 pessoas.',time:'08:15'}]},
+      {id:'e3', contactId:'c3', contactName:'Camila Rocha', company:'Órbita Digital', subject:'Feedback sobre novo dashboard', preview:'O time adorou o novo painel de relatórios!', time:'Ontem', unread:false, initials:'CR', color:'violet',
+        thread:[{fromMe:false,name:'Camila Rocha',text:'O time adorou o novo painel de relatórios, ficou muito mais rápido de acompanhar as métricas.',time:'Ontem'},{fromMe:true,name:'Você',text:'Que ótimo saber, Camila! Vou repassar o elogio pro time de produto.',time:'Ontem'}]},
+      {id:'e4', contactId:'c6', contactName:'Bruno Teixeira', company:'NimbusCloud', subject:'Proposta - próximos passos', preview:'Analisamos a proposta internamente e temos duas perguntas...', time:'2 dias', unread:true, initials:'BT', color:'info',
+        thread:[{fromMe:false,name:'Bruno Teixeira',text:'Analisamos a proposta internamente e temos duas perguntas sobre o SLA de suporte.',time:'2 dias'}]},
+      {id:'e5', contactId:'c7', contactName:'Larissa Nunes', company:'Horizonte Pay', subject:'Renovação de contrato', preview:'Confirmando a renovação para o próximo ciclo anual.', time:'3 dias', unread:false, initials:'LN', color:'accent',
+        thread:[{fromMe:false,name:'Larissa Nunes',text:'Confirmando a renovação para o próximo ciclo anual, pode seguir com o novo contrato.',time:'3 dias'},{fromMe:true,name:'Você',text:'Perfeito, Larissa! Envio o novo contrato ainda hoje.',time:'3 dias'}]},
+      {id:'e6', contactId:'c8', contactName:'Pedro Lima', company:'Cursor Data', subject:'Interesse no plano Pro', preview:'Estamos no trial há 2 semanas e queremos migrar de plano.', time:'5 dias', unread:false, initials:'PL', color:'warn',
+        thread:[{fromMe:false,name:'Pedro Lima',text:'Estamos no trial há 2 semanas e o time já quer migrar para o plano Pro.',time:'5 dias'}]},
+    ],
+    team: [
+      {id:'t1', name:'Você', email:'voce@soucrum.com', role:'Admin', initials:'VC', color:'violet'},
+      {id:'t2', name:'Marcos Vidal', email:'marcos@soucrum.com', role:'Vendas', initials:'MV', color:'accent'},
+      {id:'t3', name:'Ana Beatriz', email:'ana@soucrum.com', role:'Suporte', initials:'AB', color:'info'},
+      {id:'t4', name:'Felipe Rangel', email:'felipe@soucrum.com', role:'Marketing', initials:'FR', color:'warn'},
+      {id:'t5', name:'Sofia Cardoso', email:'sofia@soucrum.com', role:'Financeiro', initials:'SC', color:'success'},
+    ],
+  };
+
+  colorMap(name, dark) {
+    const light = { accent:['#FFE3E8','#E0345A'], info:['#E3F6F5','#2E9D9A'], violet:['#EFEBFF','#7C6AFA'], warn:['#FFF2DC','#C98315'], success:['#E3F5EC','#2F8F63'] };
+    const darkMap = { accent:['rgba(255,107,133,.18)','#FF8FA3'], info:['rgba(95,209,206,.18)','#5FD1CE'], violet:['rgba(155,140,255,.18)','#9B8CFF'], warn:['rgba(255,196,105,.18)','#FFC469'], success:['rgba(79,203,147,.18)','#5FD9A6'] };
+    const m = dark ? darkMap : light;
+    return m[name] || m.accent;
+  }
+
+  fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+
+  setView(v) { this.setState({ currentView: v, selectedContactId: null }); }
+  toggleSidebar() { this.setState(s => ({ sidebarCollapsed: !s.sidebarCollapsed })); }
+  toggleDark() { this.setState(s => ({ darkMode: !s.darkMode })); }
+  selectEmail(id) { this.setState(s => ({ selectedEmailId: id, emails: s.emails.map(e => e.id === id ? { ...e, unread: false } : e) })); }
+  sendReply() {
+    const text = this.state.composeText.trim();
+    if (!text) return;
+    this.setState(s => ({
+      emails: s.emails.map(e => e.id === s.selectedEmailId ? { ...e, thread: [...e.thread, { fromMe: true, name: 'Você', text, time: 'agora' }] } : e),
+      composeText: ''
+    }));
+  }
+  moveDealTo(stageId) {
+    const id = this.state.draggedDealId;
+    if (!id) return;
+    this.setState(s => ({ deals: s.deals.map(d => d.id === id ? { ...d, stageId } : d), draggedDealId: null, dragOverStage: null }));
+  }
+  addDeal() {
+    const id = 'd' + Date.now();
+    this.setState(s => ({ deals: [...s.deals, { id, company: 'Nova empresa', title: 'Novo negócio', contactId: null, stageId: 'novo', value: 5000, initials: 'NE', color: 'accent' }] }));
+  }
+  addContact() {
+    const id = 'c' + Date.now();
+    this.setState(s => ({ contacts: [...s.contacts, { id, name: 'Novo contato', company: 'Empresa', email: 'novo@empresa.com', phone: '(00) 00000-0000', tag: 'Lead', status: 'Novo', initials: 'NC', color: 'info' }], selectedContactId: id }));
+  }
+  addMember() {
+    const id = 't' + Date.now();
+    this.setState(s => ({ team: [...s.team, { id, name: 'Novo membro', email: 'novo@soucrum.com', role: 'Convidado', initials: 'NM', color: 'warn' }] }));
+  }
+
+  navStyle(active) {
+    return `display:flex;align-items:center;gap:12px;padding:10px 16px;margin:1px 12px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:${active ? 700 : 500};background:${active ? 'var(--text-1)' : 'transparent'};color:${active ? 'var(--bg-card)' : 'var(--text-2)'};transition:background .15s ease`;
+  }
+  navHoverStyle(active) {
+    return `background:${active ? 'var(--text-1)' : 'var(--bg-hover)'}`;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const dark = s.darkMode;
+    const c = dark ? {
+      bgApp:'#0E0E10', bgElevated:'#161618', bgCard:'#19191C', bgHover:'#222226', border:'rgba(255,255,255,0.08)',
+      text1:'#F5F5F7', text2:'#B0B0B6', text3:'#77777E', accent:'#FF6B85', accentSoft:'rgba(255,107,133,.18)', accentStrong:'#FF8FA3', accentShadow:'rgba(255,107,133,.35)',
+      shadow:'rgba(0,0,0,.55)', violetSoft:'rgba(155,140,255,.18)', violet:'#9B8CFF', cardBorder:'1px solid rgba(255,255,255,0.08)', cardShadow:'none'
+    } : {
+      bgApp:'#FAFAFA', bgElevated:'#FFFFFF', bgCard:'#FFFFFF', bgHover:'#F2F2F3', border:'#EAEAEC',
+      text1:'#171717', text2:'#6B6B70', text3:'#A0A0A6', accent:'#FF4D6D', accentSoft:'#FFE3E8', accentStrong:'#E0345A', accentShadow:'rgba(255,77,109,.30)',
+      shadow:'rgba(20,20,25,.08)', violetSoft:'#EFEBFF', violet:'#7C6AFA', cardBorder:'none', cardShadow:'0 1px 2px rgba(20,20,25,.05), 0 1px 8px rgba(20,20,25,.04)'
+    };
+    const rootVars = `--bg-app:${c.bgApp};--bg-elevated:${c.bgElevated};--bg-card:${c.bgCard};--bg-hover:${c.bgHover};--border:${c.border};--text-1:${c.text1};--text-2:${c.text2};--text-3:${c.text3};--accent:${c.accent};--accent-soft:${c.accentSoft};--accent-strong:${c.accentStrong};--accent-shadow:${c.accentShadow};--shadow:${c.shadow};--violet-soft:${c.violetSoft};--violet:${c.violet};--card-border:${c.cardBorder};--card-shadow:${c.cardShadow};display:flex;min-height:100vh;background:var(--bg-app)`;
+
+    const view = s.currentView;
+    const titles = {
+      dashboard:['Meu Painel','Visão geral do seu negócio hoje'], inbox:['Caixa de Entrada','Conversas com seus contatos'], pipeline:['Quadro','Acompanhe seus negócios por estágio'], contacts:['Contatos','Todas as pessoas e empresas'], settings:['Configurações','Sua conta, equipe e preferências'],
+      hoje:['Hoje','Suas tarefas e prioridades do dia'], projetos:['Projetos','Todos os projetos em andamento'], documentos:['Documentos','Arquivos e anotações da equipe'],
+      materiais:['Materiais','Biblioteca de materiais e recursos'], calendario:['Calendário','Sua agenda e compromissos'], foco:['Foco','Sessões de foco e produtividade'],
+      relatorios:['Relatórios','Relatórios e métricas detalhadas'], rotinas:['Rotinas','Hábitos e rotinas recorrentes'],
+    };
+    const placeholderContent = {
+      hoje:['🌅','Nada agendado para hoje','Suas tarefas e prioridades do dia aparecem aqui.'],
+      projetos:['📁','Nenhum projeto ainda','Crie um projeto para organizar seu trabalho.'],
+      documentos:['📄','Nenhum documento por aqui','Seus arquivos e anotações da equipe aparecem aqui.'],
+      materiais:['🧰','Biblioteca vazia','Adicione materiais e recursos para o time.'],
+      calendario:['🗓️','Agenda livre','Seus compromissos e eventos aparecem aqui.'],
+      foco:['🎯','Pronto para focar?','Inicie uma sessão de foco quando quiser.'],
+      relatorios:['📊','Nenhum relatório gerado','Relatórios detalhados aparecem por aqui.'],
+      rotinas:['🔁','Nenhuma rotina criada','Configure hábitos e rotinas recorrentes.'],
+    };
+    const isPlaceholder = !!placeholderContent[view];
+    const ph = placeholderContent[view] || ['','',''];
+
+    const tagStyle = (colorName) => {
+      const [bg, fg] = this.colorMap(colorName, dark);
+      return `font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:${bg};color:${fg}`;
+    };
+    const avatarColors = (colorName) => {
+      const [bg, fg] = this.colorMap(colorName, dark);
+      return { avatarBg: bg, avatarColor: fg };
+    };
+
+    // contacts
+    const dealsAll = s.contacts.map(ct => ct.id); // noop keep
+    const contactDealsCount = (id) => s.deals.filter(d => d.contactId === id).length;
+    const filteredContacts = s.contacts.filter(ct => (ct.name + ct.company).toLowerCase().includes(s.contactSearch.toLowerCase())).map(ct => ({
+      ...ct, ...avatarColors(ct.color), tagStyle: tagStyle(ct.tag === 'Cliente' ? 'success' : 'warn'),
+      dealsCount: contactDealsCount(ct.id), onSelect: () => this.setState({ selectedContactId: ct.id })
+    }));
+    const selCt = s.contacts.find(ct => ct.id === s.selectedContactId);
+    const selectedContact = selCt ? {
+      ...selCt, ...avatarColors(selCt.color), tagStyle: tagStyle(selCt.tag === 'Cliente' ? 'success' : 'warn'),
+      deals: s.deals.filter(d => d.contactId === selCt.id).map(d => ({ ...d, valueFormatted: this.fmt(d.value) }))
+    } : null;
+
+    // stages / pipeline
+    const stageDefs = [
+      { id:'novo', name:'Novo Lead', color: dark?'#FF9270':'#FF6B45' },
+      { id:'contato', name:'Contato Feito', color: dark?'#5FD1CE':'#4FBDBA' },
+      { id:'proposta', name:'Proposta Enviada', color: dark?'#FFC469':'#FFB648' },
+      { id:'negociacao', name:'Negociação', color: dark?'#B3A6EA':'#8B7FD1' },
+      { id:'fechado', name:'Fechado', color: dark?'#5FD9A6':'#3FAE7A' },
+    ];
+    const dealsFiltered = s.deals.filter(d => (d.company + d.title).toLowerCase().includes(s.dealSearch.toLowerCase()));
+    const dealsByStage = stageDefs.map(stage => {
+      const stageDeals = dealsFiltered.filter(d => d.stageId === stage.id);
+      const total = stageDeals.reduce((a, d) => a + d.value, 0);
+      const isOver = s.dragOverStage === stage.id;
+      return {
+        ...stage, count: stageDeals.length, totalFormatted: this.fmt(total),
+        columnStyle: `width:270px;flex-shrink:0;display:flex;flex-direction:column;background:${isOver ? 'var(--bg-hover)' : 'var(--bg-app)'};border:${isOver ? '1.5px dashed ' + stage.color : '1px solid var(--border)'};border-radius:16px;padding:12px 8px;transition:background .15s ease,border-color .15s ease`,
+        onDragOver: (e) => { e.preventDefault(); if (this.state.dragOverStage !== stage.id) this.setState({ dragOverStage: stage.id }); },
+        onDragLeave: () => this.setState({ dragOverStage: null }),
+        onDrop: (e) => { e.preventDefault(); this.moveDealTo(stage.id); },
+        deals: stageDeals.map(d => {
+          const [bg, fg] = this.colorMap(d.color, dark);
+          const dragging = s.draggedDealId === d.id;
+          return {
+            ...d, valueFormatted: this.fmt(d.value), avatarBg: bg, avatarColor: fg,
+            cardStyle: `background:var(--bg-elevated);border:1px solid var(--border);border-radius:13px;padding:13px 14px;cursor:grab;opacity:${dragging ? 0.35 : 1};transition:box-shadow .15s ease,transform .15s ease`,
+            cardHoverStyle: `box-shadow:0 8px 20px -8px var(--shadow);transform:translateY(-2px)`,
+            onDragStart: () => this.setState({ draggedDealId: d.id }),
+            onDragEnd: () => this.setState({ draggedDealId: null, dragOverStage: null }),
+          };
+        }),
+      };
+    });
+    const stageSummary = stageDefs.map(stage => {
+      const cnt = s.deals.filter(d => d.stageId === stage.id).length;
+      return { ...stage, count: cnt, pct: Math.round((cnt / s.deals.length) * 100) };
+    });
+
+    // emails
+    const filteredEmails = s.emails.filter(e => (e.subject + e.contactName + e.preview).toLowerCase().includes(s.emailSearch.toLowerCase())).map(e => {
+      const [bg, fg] = this.colorMap(e.color, dark);
+      const active = e.id === s.selectedEmailId;
+      return {
+        ...e, avatarBg: bg, avatarColor: fg, nameWeight: e.unread ? 700 : 500,
+        rowStyle: `display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;background:${active ? 'var(--bg-hover)' : 'transparent'}`,
+        onSelect: () => this.selectEmail(e.id),
+      };
+    });
+    const selEm = s.emails.find(e => e.id === s.selectedEmailId);
+    const selectedEmail = selEm ? {
+      ...selEm, ...avatarColors(selEm.color),
+      thread: selEm.thread.map(m => ({ ...m, align: m.fromMe ? 'flex-end' : 'flex-start', bg: m.fromMe ? 'var(--accent)' : 'var(--bg-hover)', color: m.fromMe ? '#fff' : 'var(--text-1)' })),
+    } : null;
+
+    // dashboard
+    const kpisRaw = [
+      { label:'Receita do mês', value:'R$ 148.200', up:true, trendLabel:'+12%', trendColor: dark?'#5FD9A6':'#2F8F63' },
+      { label:'Negócios fechados', value:'27', up:true, trendLabel:'+4', trendColor: dark?'#5FD9A6':'#2F8F63' },
+      { label:'Taxa de conversão', value:'34%', up:true, trendLabel:'+2%', trendColor: dark?'#5FD9A6':'#2F8F63' },
+      { label:'Novos leads', value:'63', up:false, trendLabel:'-3', trendColor: dark?'#FF8FA3':'#E0345A' },
+    ];
+    const kpis = kpisRaw.map((k, i) => ({ ...k, divider: i === kpisRaw.length - 1 ? 'none' : '1px solid var(--border)', arrowPath: k.up ? 'M5 1l4 8H1z' : 'M5 9L1 1h8z' }));
+    const monthlyRaw = [{month:'Fev',value:38},{month:'Mar',value:52},{month:'Abr',value:41},{month:'Mai',value:60},{month:'Jun',value:55},{month:'Jul',value:71}];
+    const maxM = Math.max(...monthlyRaw.map(m => m.value));
+    const monthlyChart = monthlyRaw.map((m, i) => ({ ...m, heightPct: Math.round((m.value / maxM) * 100), barColor: i === monthlyRaw.length - 1 ? 'var(--accent)' : 'var(--bg-hover)' }));
+    const activityRaw = [
+      { color:'var(--accent-strong)', text:'Negócio criado: TechNova · Add-on de API', time:'há 20min' },
+      { color:'var(--violet)', text:'Você respondeu Camila Rocha (Órbita Digital)', time:'há 1h' },
+      { color: dark?'#5FD9A6':'#2F8F63', text:'Negócio movido para Fechado: Vértice Software', time:'ontem' },
+      { color: dark?'#5FD1CE':'#2E9D9A', text:'Novo contato adicionado: Pedro Lima (Cursor Data)', time:'ontem' },
+      { color: dark?'#FFC469':'#C98315', text:'Proposta enviada para NimbusCloud', time:'2 dias' },
+    ];
+    const activity = activityRaw.map((a, i) => ({ ...a, dotColor: a.color, lineStyle: i === activityRaw.length - 1 ? 'display:none' : 'width:1.5px;flex:1;background:var(--border);margin-top:4px' }));
+
+    // settings notif toggles
+    const notifTrack = (on) => `width:40px;height:23px;border-radius:20px;background:${on ? 'var(--accent)' : 'var(--bg-hover)'};position:relative;cursor:pointer;flex-shrink:0;transition:background .15s ease`;
+    const notifKnob = (on) => `width:17px;height:17px;border-radius:50%;background:#fff;position:absolute;top:3px;left:${on ? '20px' : '3px'};transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.25)`;
+    const notifSettings = [
+      { label:'E-mails de novas mensagens', desc:'Receba um e-mail quando um contato responder', on: s.notifEmail, toggle: () => this.setState({ notifEmail: !s.notifEmail }) },
+      { label:'Atualizações de negócios', desc:'Avisos quando um negócio muda de estágio', on: s.notifDeals, toggle: () => this.setState({ notifDeals: !s.notifDeals }) },
+      { label:'Resumo semanal', desc:'Relatório de desempenho toda segunda-feira', on: s.notifWeekly, toggle: () => this.setState({ notifWeekly: !s.notifWeekly }) },
+    ].map(n => ({ ...n, trackStyle: notifTrack(n.on), knobStyle: notifKnob(n.on) }));
+
+    const team = s.team.map(m => ({ ...m, ...avatarColors(m.color) }));
+
+    const showSidebarLabels = !s.sidebarCollapsed;
+    const unreadCount = s.emails.filter(e => e.unread).length;
+
+    let searchPlaceholder = '', searchValue = '', onSearchChange = () => {};
+    if (view === 'contacts') { searchPlaceholder = 'Buscar contatos ou empresas...'; searchValue = s.contactSearch; onSearchChange = (e) => this.setState({ contactSearch: e.target.value }); }
+    else if (view === 'pipeline') { searchPlaceholder = 'Buscar negócios...'; searchValue = s.dealSearch; onSearchChange = (e) => this.setState({ dealSearch: e.target.value }); }
+    else if (view === 'inbox') { searchPlaceholder = 'Buscar e-mails...'; searchValue = s.emailSearch; onSearchChange = (e) => this.setState({ emailSearch: e.target.value }); }
+
+    return {
+      rootVars, sidebarWidthPx: s.sidebarCollapsed ? 76 : 244, showSidebarLabels,
+      toggleSidebar: () => this.toggleSidebar(), toggleDark: () => this.toggleDark(),
+      isDark: dark, isLight: !dark, themeLabel: dark ? 'Modo escuro' : 'Modo claro',
+      goDashboard: () => this.setView('dashboard'), goInbox: () => this.setView('inbox'), goPipeline: () => this.setView('pipeline'), goContacts: () => this.setView('contacts'), goSettings: () => this.setView('settings'),
+      goHoje: () => this.setView('hoje'), goProjetos: () => this.setView('projetos'), goDocumentos: () => this.setView('documentos'), goMateriais: () => this.setView('materiais'),
+      goCalendario: () => this.setView('calendario'), goFoco: () => this.setView('foco'), goRelatorios: () => this.setView('relatorios'), goRotinas: () => this.setView('rotinas'),
+      navDashboardStyle: this.navStyle(view==='dashboard'), navInboxStyle: this.navStyle(view==='inbox'), navPipelineStyle: this.navStyle(view==='pipeline'), navContactsStyle: this.navStyle(view==='contacts'), navSettingsStyle: this.navStyle(view==='settings'),
+      navHojeStyle: this.navStyle(view==='hoje'), navProjetosStyle: this.navStyle(view==='projetos'), navDocumentosStyle: this.navStyle(view==='documentos'), navMateriaisStyle: this.navStyle(view==='materiais'),
+      navCalendarioStyle: this.navStyle(view==='calendario'), navFocoStyle: this.navStyle(view==='foco'), navRelatoriosStyle: this.navStyle(view==='relatorios'), navRotinasStyle: this.navStyle(view==='rotinas'),
+      navInboxHoverStyle: this.navHoverStyle(view==='inbox'), navHojeHoverStyle: this.navHoverStyle(view==='hoje'), navPipelineHoverStyle: this.navHoverStyle(view==='pipeline'), navProjetosHoverStyle: this.navHoverStyle(view==='projetos'),
+      navDocumentosHoverStyle: this.navHoverStyle(view==='documentos'), navMateriaisHoverStyle: this.navHoverStyle(view==='materiais'), navDashboardHoverStyle: this.navHoverStyle(view==='dashboard'), navCalendarioHoverStyle: this.navHoverStyle(view==='calendario'),
+      navFocoHoverStyle: this.navHoverStyle(view==='foco'), navRelatoriosHoverStyle: this.navHoverStyle(view==='relatorios'), navRotinasHoverStyle: this.navHoverStyle(view==='rotinas'), navSettingsHoverStyle: this.navHoverStyle(view==='settings'),
+      collapseIconStyle: s.sidebarCollapsed ? 'transform:rotate(180deg)' : '',
+      isPlaceholder, placeholderEmoji: ph[0], placeholderTitle: ph[1], placeholderSubtitle: ph[2],
+      hasUnreadEmails: unreadCount > 0, unreadCount, unreadBadgeStyle: `background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px`,
+      topbarTitle: titles[view][0], topbarSubtitle: titles[view][1],
+      showSearch: view === 'contacts' || view === 'pipeline' || view === 'inbox', searchPlaceholder, searchValue, onSearchChange,
+      showPrimaryAction: view === 'pipeline' || view === 'contacts',
+      primaryActionLabel: view === 'pipeline' ? 'Novo negócio' : 'Novo contato',
+      primaryActionFn: view === 'pipeline' ? () => this.addDeal() : () => this.addContact(),
+      isDashboard: view === 'dashboard', isInbox: view === 'inbox', isPipeline: view === 'pipeline', isContacts: view === 'contacts', isSettings: view === 'settings',
+      kpis, monthlyChart, stageSummary, activity,
+      filteredEmails, hasSelectedEmail: !!selectedEmail, selectedEmail, composeText: s.composeText, onComposeChange: (e) => this.setState({ composeText: e.target.value }), sendReply: () => this.sendReply(),
+      dealsByStage,
+      filteredContacts, hasSelectedContact: !!selectedContact, selectedContact, closeContact: () => this.setState({ selectedContactId: null }),
+      team, addMember: () => this.addMember(), notifSettings,
+    };
+  }
+}
+</script>
+</body>
+</html>

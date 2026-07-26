@@ -1,0 +1,540 @@
+import { useState } from 'react'
+import type { CSSProperties } from 'react'
+import { buildMcpConfig, useMcpSettings } from '../../hooks/useMcpSettings'
+import type { McpServices } from '../../hooks/useMcpSettings'
+import { useMcpHealth } from '../../hooks/useMcpHealth'
+
+const cardStyle: CSSProperties = {
+  background: 'var(--bg-card)',
+  border: 'var(--card-border)',
+  boxShadow: 'var(--card-shadow)',
+  borderRadius: 'var(--radius-card)',
+  backdropFilter: 'var(--blur)',
+  WebkitBackdropFilter: 'var(--blur)',
+  padding: 24,
+}
+
+const inputStyle: CSSProperties = {
+  width: '100%',
+  padding: '10px 13px',
+  border: '1px solid var(--border)',
+  borderRadius: 11,
+  fontSize: 13.5,
+  color: 'var(--text-1)',
+  background: 'var(--bg-hover)',
+  outline: 'none',
+}
+
+const labelStyle: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'var(--text-3)',
+  marginBottom: 6,
+}
+
+function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      role="switch"
+      aria-checked={on}
+      style={{
+        width: 40,
+        height: 23,
+        borderRadius: 20,
+        background: on ? 'var(--accent)' : 'var(--bg-hover)',
+        position: 'relative',
+        cursor: 'pointer',
+        flexShrink: 0,
+        transition: 'background .15s ease',
+      }}
+    >
+      <div
+        style={{
+          width: 17,
+          height: 17,
+          borderRadius: '50%',
+          background: '#fff',
+          position: 'absolute',
+          top: 3,
+          left: on ? 20 : 3,
+          transition: 'left .15s ease',
+          boxShadow: '0 1px 3px rgba(0,0,0,.25)',
+        }}
+      />
+    </div>
+  )
+}
+
+const servicos: { key: keyof McpServices; label: string; desc: string }[] = [
+  { key: 'notion', label: 'Notion', desc: 'Criar e ler páginas e bancos de dados' },
+  { key: 'googleCalendar', label: 'Google Calendar', desc: 'Agendar cartões com prazo como eventos' },
+  { key: 'gmail', label: 'Gmail', desc: 'Transformar e-mails em cartões' },
+  { key: 'googleDrive', label: 'Google Drive', desc: 'Exportar projetos como documentos' },
+]
+
+const canaisNotificacao: {
+  key: 'slack' | 'googleChat' | 'teams' | 'email'
+  label: string
+  env: string
+}[] = [
+  { key: 'slack', label: 'Slack', env: 'SOUCRUM_SLACK_WEBHOOK_URL' },
+  { key: 'googleChat', label: 'Google Chat', env: 'SOUCRUM_GOOGLE_CHAT_WEBHOOK_URL' },
+  { key: 'teams', label: 'Microsoft Teams', env: 'SOUCRUM_TEAMS_WEBHOOK_URL' },
+  { key: 'email', label: 'E-mail', env: 'SOUCRUM_RESEND_API_KEY + EMAIL_FROM/TO' },
+]
+
+export function McpSettings() {
+  const { settings, update, toggleService, reset } = useMcpSettings()
+  const [mostrarChave, setMostrarChave] = useState(false)
+  const [copiado, setCopiado] = useState(false)
+  const [verFerramentas, setVerFerramentas] = useState(false)
+  const { state: health, check } = useMcpHealth(settings.healthPort)
+
+  const configurado = settings.supabaseUrl.trim() !== '' && settings.publishableKey.trim() !== ''
+  // service_role tem "role":"service_role" no payload; a publicável começa com sb_publishable_.
+  const chaveArriscada = /service_role/i.test(settings.publishableKey)
+  const config = buildMcpConfig(settings)
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(config)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      setCopiado(false)
+    }
+  }
+
+  return (
+    <>
+      {/* Conexão */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>Conexão MCP</div>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 20,
+              background: configurado ? 'var(--accent-soft)' : 'var(--bg-hover)',
+              color: configurado ? 'var(--accent-strong)' : 'var(--text-3)',
+            }}
+          >
+            {configurado ? 'Configurado' : 'Não configurado'}
+          </span>
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 18, lineHeight: 1.5 }}>
+          Permite que assistentes de IA (Claude, Gemini) leiam e atualizem seus cartões, projetos e
+          rotinas. O servidor roda na sua máquina — estes dados ficam salvos apenas neste navegador.
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <div style={labelStyle}>URL do Supabase</div>
+            <input
+              value={settings.supabaseUrl}
+              onChange={(e) => update('supabaseUrl', e.target.value)}
+              placeholder="https://seu-projeto.supabase.co"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <div style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+              <span>Chave publicável (anon)</span>
+              <span
+                onClick={() => setMostrarChave((v) => !v)}
+                style={{ cursor: 'pointer', color: 'var(--violet)', fontWeight: 600 }}
+              >
+                {mostrarChave ? 'Ocultar' : 'Mostrar'}
+              </span>
+            </div>
+            <input
+              type={mostrarChave ? 'text' : 'password'}
+              value={settings.publishableKey}
+              onChange={(e) => update('publishableKey', e.target.value)}
+              placeholder="sb_publishable_..."
+              autoComplete="off"
+              spellCheck={false}
+              style={{
+                ...inputStyle,
+                borderColor: chaveArriscada ? 'var(--accent)' : 'var(--border)',
+              }}
+            />
+            {chaveArriscada && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: '10px 12px',
+                  borderRadius: 11,
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent-strong)',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                }}
+              >
+                ⚠️ Isso parece uma chave <strong>service_role</strong>. Ela ignora as regras de acesso
+                e dá controle total do banco — não guarde no navegador. Use a chave publicável (anon).
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div style={labelStyle}>Caminho do servidor MCP</div>
+            <input
+              value={settings.serverPath}
+              onChange={(e) => update('serverPath', e.target.value)}
+              placeholder="/caminho/para/soucrum-mcp/dist/index.js"
+              spellCheck={false}
+              style={inputStyle}
+            />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: 6,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-1)' }}>Somente leitura</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                O assistente consulta, mas não cria nem altera nada
+              </div>
+            </div>
+            <Toggle on={settings.readOnly} onClick={() => update('readOnly', !settings.readOnly)} />
+          </div>
+        </div>
+      </div>
+
+      {/* Status da conexão */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>Status do servidor</div>
+          <button
+            onClick={check}
+            disabled={health.status === 'loading'}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border)',
+              color: 'var(--text-2)',
+              padding: '7px 14px',
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: 12.5,
+              cursor: health.status === 'loading' ? 'default' : 'pointer',
+              opacity: health.status === 'loading' ? 0.6 : 1,
+            }}
+          >
+            {health.status === 'loading' ? 'Verificando…' : 'Testar conexão'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>Porta do endpoint de status</div>
+            <input
+              type="number"
+              value={settings.healthPort || ''}
+              onChange={(e) => update('healthPort', Number(e.target.value) || 0)}
+              placeholder="7757"
+              style={{ ...inputStyle, maxWidth: 160 }}
+            />
+          </div>
+        </div>
+
+        {health.status === 'idle' && (
+          <div style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.5 }}>
+            Rode o servidor com <code>SOUCRUM_HTTP_PORT={settings.healthPort || 7757}</code> e clique em
+            Testar conexão para ver as ferramentas ativas.
+          </div>
+        )}
+
+        {health.status === 'error' && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: 12,
+              background: 'var(--accent-soft)',
+              color: 'var(--accent-strong)',
+              fontSize: 12.5,
+              lineHeight: 1.5,
+            }}
+          >
+            <strong>{health.message}</strong>
+            {health.hint && <div style={{ marginTop: 6, fontWeight: 500 }}>{health.hint}</div>}
+          </div>
+        )}
+
+        {health.status === 'ok' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
+              {[
+                { rotulo: 'Servidor', valor: `v${health.data.version}` },
+                {
+                  rotulo: 'Modo',
+                  valor: health.data.mode === 'read-only' ? 'Somente leitura' : 'Leitura e escrita',
+                },
+                {
+                  rotulo: 'Ferramentas',
+                  valor: `${health.data.tool_count} (${health.data.write_tool_count} de escrita)`,
+                },
+                {
+                  rotulo: 'Banco',
+                  valor: health.data.supabase.reachable
+                    ? `Conectado · ${health.data.supabase.latency_ms} ms`
+                    : 'Sem conexão',
+                },
+              ].map((item) => (
+                <div
+                  key={item.rotulo}
+                  style={{
+                    padding: '12px 14px',
+                    background: 'var(--bg-hover)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 600 }}>{item.rotulo}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)', marginTop: 4 }}>
+                    {item.valor}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!health.data.supabase.reachable && (
+              <div
+                style={{
+                  padding: '11px 13px',
+                  borderRadius: 11,
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent-strong)',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                }}
+              >
+                O servidor está de pé, mas não alcançou o banco
+                {health.data.supabase.error ? ` — ${health.data.supabase.error}.` : '.'} Confira a URL e a
+                chave acima.
+              </div>
+            )}
+
+            <div>
+              <div
+                onClick={() => setVerFerramentas((v) => !v)}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: 'var(--violet)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                {verFerramentas ? 'Ocultar' : 'Ver'} as {health.data.tool_count} ferramentas
+              </div>
+              {verFerramentas && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {health.data.tools.map((t) => (
+                    <span
+                      key={t.name}
+                      title={t.description}
+                      style={{
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        padding: '4px 9px',
+                        borderRadius: 20,
+                        background: t.write ? 'var(--accent-soft)' : 'var(--bg-hover)',
+                        color: t.write ? 'var(--accent-strong)' : 'var(--text-2)',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                      }}
+                    >
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
+              Verificado às {new Date(health.data.checked_at).toLocaleTimeString('pt-BR')} · as etiquetas
+              em destaque alteram dados
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Serviços conectados */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+          Serviços conectados
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.5 }}>
+          Habilite os serviços que o assistente pode usar junto com o SouCrum. Cada um entra como um
+          servidor MCP próprio e pede as credenciais dele.
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {servicos.map((s) => (
+            <div
+              key={s.key}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '11px 4px',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-1)' }}>{s.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{s.desc}</div>
+              </div>
+              <Toggle on={settings.services[s.key]} onClick={() => toggleService(s.key)} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Canais de notificação */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+          Canais de notificação
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.5 }}>
+          Para onde os avisos são enviados (ex.: resumo de tarefas atrasadas). Configure cada canal no
+          servidor MCP com as variáveis abaixo — o estado é lido do próprio servidor, então reflete o
+          que está valendo de verdade.
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {canaisNotificacao.map((c) => {
+            const pronto =
+              health.status === 'ok' ? Boolean(health.data.notifications?.[c.key]) : undefined
+            return (
+              <div
+                key={c.key}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '11px 4px',
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-1)' }}>{c.label}</div>
+                  <code style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{c.env}</code>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    background:
+                      pronto === undefined
+                        ? 'var(--bg-hover)'
+                        : pronto
+                          ? 'var(--accent-soft)'
+                          : 'var(--bg-hover)',
+                    color:
+                      pronto === undefined
+                        ? 'var(--text-3)'
+                        : pronto
+                          ? 'var(--accent-strong)'
+                          : 'var(--text-3)',
+                  }}
+                >
+                  {pronto === undefined ? 'Teste a conexão' : pronto ? 'Ativo' : 'Não configurado'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 14, lineHeight: 1.5 }}>
+          O assistente envia com <code>send_notification</code> ou{' '}
+          <code>notify_overdue_summary</code>. Um canal que falhar não impede os outros — o resultado
+          vem por canal.
+        </div>
+      </div>
+
+      {/* Configuração gerada */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>Configuração para colar</div>
+          <button
+            onClick={copiar}
+            style={{
+              background: copiado ? 'var(--accent-soft)' : 'var(--accent)',
+              color: copiado ? 'var(--accent-strong)' : '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 12.5,
+              cursor: 'pointer',
+              transition: 'background .15s ease',
+            }}
+          >
+            {copiado ? '✓ Copiado' : 'Copiar'}
+          </button>
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 14, lineHeight: 1.5 }}>
+          Claude Desktop: <code>claude_desktop_config.json</code> · Gemini CLI:{' '}
+          <code>~/.gemini/settings.json</code> · Cursor: <code>~/.cursor/mcp.json</code>
+        </div>
+        <pre
+          style={{
+            margin: 0,
+            padding: 16,
+            background: 'var(--bg-hover)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            fontSize: 12,
+            lineHeight: 1.55,
+            color: 'var(--text-2)',
+            overflowX: 'auto',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+          }}
+        >
+          {config}
+        </pre>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 14,
+          }}
+        >
+          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+            Os tokens do Notion e do Google são preenchidos por você no arquivo.
+          </span>
+          <button
+            onClick={reset}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border)',
+              color: 'var(--text-2)',
+              padding: '7px 14px',
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: 12.5,
+              cursor: 'pointer',
+            }}
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}

@@ -1,0 +1,23 @@
+{
+  "//": "Gemini CLI — cole em ~/.gemini/settings.json (mesmo formato de mcpServers).",
+  "//_docs": "https://github.com/google-gemini/gemini-cli — Gemini CLI suporta MCP nativamente.",
+  "mcpServers": {
+    "soucrum": {
+      "command": "node",
+      "args": ["/CAMINHO/PradoERP/soucrum-mcp/dist/index.js"],
+      "env": {
+        "SOUCRUM_SUPABASE_URL": "https://sbyivwkcvjkropoforqx.supabase.co",
+        "SOUCRUM_SUPABASE_KEY": "sb_publishable_SUA_CHAVE",
+        "SOUCRUM_USER_JWT": "SEU_JWT_DE_USUARIO"
+      },
+      "timeout": 30000
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_TOKEN": "ntn_SEU_TOKEN_DE_INTEGRACAO"
+      }
+    }
+  }
+}
