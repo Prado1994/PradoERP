@@ -9,11 +9,16 @@ import { PipelineView } from './components/views/PipelineView'
 import { ContactsView } from './components/views/ContactsView'
 import { SettingsView } from './components/views/SettingsView'
 import { PlaceholderView } from './components/views/PlaceholderView'
+import { EmailConsentDialog, useEmailConsent } from './components/EmailConsent'
+
+/** No app real vem do usuário autenticado (auth.users.email). */
+const USUARIO_EMAIL = 'voce@soucrum.com'
 
 export function App() {
   const store = useCrmStore()
   const view = store.currentView
   const placeholder = placeholderContent[view]
+  const consent = useEmailConsent()
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', minWidth: 1024, background: 'var(--bg-app)', ...cssVars(store.darkMode) }}>
@@ -31,6 +36,11 @@ export function App() {
           {placeholder && <PlaceholderView emoji={placeholder[0]} title={placeholder[1]} subtitle={placeholder[2]} />}
         </main>
       </div>
+
+      {/* Pedido de permissão no primeiro acesso */}
+      {!consent.jaRespondeu && (
+        <EmailConsentDialog email={USUARIO_EMAIL} onDecide={consent.decidir} />
+      )}
     </div>
   )
 }
