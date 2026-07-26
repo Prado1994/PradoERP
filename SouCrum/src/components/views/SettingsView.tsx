@@ -1,6 +1,7 @@
 import type { CrmStore } from '../../hooks/useCrmStore'
 import type { NotifSettings } from '../../hooks/useCrmStore'
 import { colorMap } from '../../theme'
+import { McpSettings } from './McpSettings'
 
 const cardStyle: React.CSSProperties = {
   background: 'var(--bg-card)',
@@ -106,6 +107,9 @@ export function SettingsView({ store }: { store: CrmStore }) {
       </div>
 
       {/* Plan */}
+      {/* MCP — integração com assistentes de IA */}
+      <McpSettings />
+
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>Plano Pro</div>
