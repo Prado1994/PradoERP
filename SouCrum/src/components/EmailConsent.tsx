@@ -51,7 +51,9 @@ export function useEmailConsent() {
 const overlay: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,.5)',
+  background: 'rgba(8,1,6,.62)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -60,12 +62,17 @@ const overlay: CSSProperties = {
 }
 
 const modal: CSSProperties = {
-  background: 'var(--bg-card)',
-  borderRadius: 20,
+  // Diálogo precisa ser opaco: `--bg-card` é vidro translúcido e deixaria o
+  // conteúdo de trás atravessar o texto. A camada de bg-card sobre a cor
+  // opaca do app dá o mesmo tom do vidro, mas sem transparência.
+  backgroundColor: 'var(--bg-app)',
+  backgroundImage: 'linear-gradient(var(--bg-card), var(--bg-card))',
+  border: 'var(--card-border)',
+  borderRadius: 'var(--radius-card)',
   padding: 28,
   maxWidth: 440,
   width: '100%',
-  boxShadow: '0 24px 60px -12px rgba(0,0,0,.4)',
+  boxShadow: '0 30px 70px -14px rgba(0,0,0,.6)',
   animation: 'fadeUp .2s ease',
 }
 

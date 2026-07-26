@@ -20,7 +20,8 @@ export interface NotifSettings {
  */
 export function useCrmStore() {
   const [currentView, setCurrentView] = useState<ViewId>('dashboard')
-  const [darkMode, setDarkMode] = useState(false)
+  // O visual é escuro por natureza; o modo claro é a variação, não o padrão.
+  const [darkMode, setDarkMode] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)

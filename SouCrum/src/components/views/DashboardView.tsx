@@ -5,7 +5,9 @@ const cardStyle: React.CSSProperties = {
   background: 'var(--bg-card)',
   border: 'var(--card-border)',
   boxShadow: 'var(--card-shadow)',
-  borderRadius: 18,
+  borderRadius: 'var(--radius-card)',
+  backdropFilter: 'var(--blur)',
+  WebkitBackdropFilter: 'var(--blur)',
 }
 
 export function DashboardView({ store }: { store: CrmStore }) {
@@ -78,8 +80,10 @@ export function DashboardView({ store }: { store: CrmStore }) {
                     width: '100%',
                     maxWidth: 38,
                     height: `${Math.round((m.value / maxM) * 100)}%`,
-                    background: i === monthlyRaw.length - 1 ? 'var(--accent)' : 'var(--bg-hover)',
-                    borderRadius: '8px 8px 4px 4px',
+                    background: i === monthlyRaw.length - 1 ? 'var(--brand-gradient)' : 'var(--accent-soft)',
+                    // O mês corrente ganha brilho, como o dado em destaque da referência.
+                    boxShadow: i === monthlyRaw.length - 1 ? '0 0 26px -4px var(--accent-shadow)' : 'none',
+                    borderRadius: '10px 10px 4px 4px',
                   }}
                 />
                 <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 600 }}>{m.month}</div>

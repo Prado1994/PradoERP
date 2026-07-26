@@ -2,6 +2,23 @@ import type { CrmStore } from '../hooks/useCrmStore'
 import { viewTitles } from '../data'
 import { BellIcon, PlusIcon, SearchIcon } from './icons'
 
+/**
+ * Título com peso misto: a primeira palavra leve e apagada, o resto forte.
+ * É o mesmo recurso tipográfico do visual de referência ("Professional **Match
+ * Insights**"). Título de uma palavra só fica forte, sem inventar contraste.
+ */
+function DisplayTitle({ text }: { text: string }) {
+  const espaco = text.indexOf(' ')
+  const base = { fontSize: 21, letterSpacing: '-0.5px', color: 'var(--text-1)', lineHeight: 1.15 }
+  if (espaco < 0) return <div style={{ ...base, fontWeight: 800 }}>{text}</div>
+  return (
+    <div style={base}>
+      <span style={{ fontWeight: 300, color: 'var(--text-2)' }}>{text.slice(0, espaco)} </span>
+      <span style={{ fontWeight: 800 }}>{text.slice(espaco + 1)}</span>
+    </div>
+  )
+}
+
 export function Topbar({ store }: { store: CrmStore }) {
   const view = store.currentView
   const [title, subtitle] = viewTitles[view] ?? ['', '']
@@ -37,12 +54,14 @@ export function Topbar({ store }: { store: CrmStore }) {
         gap: 18,
         padding: '16px 28px',
         background: 'var(--bg-elevated)',
+        backdropFilter: 'var(--blur)',
+        WebkitBackdropFilter: 'var(--blur)',
         borderBottom: '1px solid var(--border)',
         flexShrink: 0,
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.3px' }}>{title}</div>
+        <DisplayTitle text={title} />
         <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 1 }}>{subtitle}</div>
       </div>
 
@@ -55,10 +74,10 @@ export function Topbar({ store }: { store: CrmStore }) {
             placeholder={searchPlaceholder}
             style={{
               width: '100%',
-              padding: '9px 14px 9px 36px',
-              borderRadius: 11,
+              padding: '10px 16px 10px 38px',
+              borderRadius: 999,
               border: '1px solid var(--border)',
-              background: 'var(--bg-app)',
+              background: 'var(--bg-card)',
               color: 'var(--text-1)',
               fontSize: 13.5,
               outline: 'none',
@@ -76,18 +95,25 @@ export function Topbar({ store }: { store: CrmStore }) {
             display: 'flex',
             alignItems: 'center',
             gap: 7,
-            background: 'var(--accent)',
+            background: 'var(--brand-gradient)',
             color: '#fff',
             border: 'none',
-            padding: '10px 18px',
+            padding: '11px 20px',
             borderRadius: 999,
             fontWeight: 700,
             fontSize: 13.5,
             cursor: 'pointer',
-            transition: 'opacity .15s ease',
+            boxShadow: '0 12px 28px -12px var(--accent-shadow)',
+            transition: 'transform .15s ease, box-shadow .15s ease',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)'
+            e.currentTarget.style.boxShadow = '0 16px 34px -12px var(--accent-shadow)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = '0 12px 28px -12px var(--accent-shadow)'
+          }}
         >
           <PlusIcon />
           {primaryLabel}
@@ -96,26 +122,31 @@ export function Topbar({ store }: { store: CrmStore }) {
 
       <button
         style={{
-          background: 'none',
+          background: 'var(--bg-card)',
           border: '1px solid var(--border)',
-          borderRadius: 11,
-          padding: 9,
+          borderRadius: '50%',
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           cursor: 'pointer',
           color: 'var(--text-2)',
           position: 'relative',
+          flexShrink: 0,
         }}
       >
         <BellIcon />
         <span
           style={{
             position: 'absolute',
-            top: 6,
-            right: 6,
+            top: 8,
+            right: 8,
             width: 7,
             height: 7,
             borderRadius: '50%',
             background: 'var(--accent)',
-            border: '1.5px solid var(--bg-elevated)',
+            boxShadow: '0 0 8px var(--accent-shadow)',
           }}
         />
       </button>

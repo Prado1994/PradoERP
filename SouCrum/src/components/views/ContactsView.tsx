@@ -21,7 +21,17 @@ export function ContactsView({ store }: { store: CrmStore }) {
 
   return (
     <div style={{ position: 'relative', height: '100%', animation: 'fadeUp .25s ease' }}>
-      <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', boxShadow: 'var(--card-shadow)', borderRadius: 18, overflow: 'hidden' }}>
+      <div
+        style={{
+          background: 'var(--bg-card)',
+          border: 'var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
+          borderRadius: 'var(--radius-card)',
+          backdropFilter: 'var(--blur)',
+          WebkitBackdropFilter: 'var(--blur)',
+          overflow: 'hidden',
+        }}
+      >
         <div
           style={{
             display: 'grid',
@@ -77,9 +87,13 @@ export function ContactsView({ store }: { store: CrmStore }) {
             right: 0,
             bottom: 0,
             width: 380,
-            background: 'var(--bg-card)',
-            borderRadius: 18,
-            boxShadow: '-12px 0 32px -12px var(--shadow)',
+            // Opaco pelo mesmo motivo do diálogo: a tabela atrás atravessaria
+            // o texto se o painel usasse só o vidro translúcido.
+            backgroundColor: 'var(--bg-app)',
+            backgroundImage: 'linear-gradient(var(--bg-card), var(--bg-card))',
+            borderRadius: 'var(--radius-card)',
+            border: 'var(--card-border)',
+            boxShadow: '-18px 0 46px -14px var(--shadow)',
             padding: 26,
             overflowY: 'auto',
             animation: 'slideIn .2s ease',

@@ -50,14 +50,15 @@ function navStyle(active: boolean): CSSProperties {
     alignItems: 'center',
     gap: 12,
     padding: '10px 16px',
-    margin: '1px 12px',
-    borderRadius: 11,
+    margin: '2px 12px',
+    // Pílula, como os chips do visual de referência.
+    borderRadius: 999,
     cursor: 'pointer',
     fontSize: 13.5,
     fontWeight: active ? 700 : 500,
     background: active ? 'var(--text-1)' : 'transparent',
-    color: active ? 'var(--bg-card)' : 'var(--text-2)',
-    transition: 'background .15s ease',
+    color: active ? 'var(--on-invert)' : 'var(--text-2)',
+    transition: 'background .15s ease, color .15s ease',
   }
 }
 
@@ -72,6 +73,8 @@ export function Sidebar({ store }: { store: CrmStore }) {
         width: collapsed ? 76 : 244,
         flexShrink: 0,
         background: 'var(--bg-elevated)',
+        backdropFilter: 'var(--blur)',
+        WebkitBackdropFilter: 'var(--blur)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
@@ -85,10 +88,11 @@ export function Sidebar({ store }: { store: CrmStore }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, padding: '0 16px', marginBottom: 20 }}>
         <div
           style={{
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             borderRadius: '50%',
-            background: 'var(--violet)',
+            background: 'var(--brand-gradient)',
+            boxShadow: '0 8px 20px -8px var(--accent-shadow)',
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
@@ -101,8 +105,10 @@ export function Sidebar({ store }: { store: CrmStore }) {
           S
         </div>
         {showLabels && (
-          <span style={{ fontWeight: 800, fontSize: 16.5, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--text-1)' }}>
-            SouCrum
+          <span style={{ fontSize: 16.5, letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--text-1)' }}>
+            {/* Peso misto: a assinatura tipográfica do visual. */}
+            <span style={{ fontWeight: 300, color: 'var(--text-2)' }}>Sou</span>
+            <span style={{ fontWeight: 800 }}>Crum</span>
           </span>
         )}
       </div>
@@ -111,17 +117,26 @@ export function Sidebar({ store }: { store: CrmStore }) {
       <div
         style={{
           margin: '0 16px 14px',
-          padding: '9px 12px',
+          padding: '9px 13px',
           border: '1px solid var(--border)',
-          borderRadius: 12,
+          borderRadius: 999,
           display: 'flex',
           alignItems: 'center',
           gap: 9,
           cursor: 'pointer',
-          background: 'var(--bg-app)',
+          background: 'var(--bg-card)',
         }}
       >
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--violet)', flexShrink: 0 }} />
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: 'var(--accent)',
+            boxShadow: '0 0 10px var(--accent-shadow)',
+            flexShrink: 0,
+          }}
+        />
         {showLabels && (
           <>
             <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-1)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -178,10 +193,11 @@ export function Sidebar({ store }: { store: CrmStore }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px' }}>
           <div
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 9,
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
               background: 'var(--violet-soft)',
+              border: '1px solid var(--border)',
               color: 'var(--violet)',
               display: 'flex',
               alignItems: 'center',

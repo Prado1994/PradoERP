@@ -7,7 +7,9 @@ const cardStyle: React.CSSProperties = {
   background: 'var(--bg-card)',
   border: 'var(--card-border)',
   boxShadow: 'var(--card-shadow)',
-  borderRadius: 18,
+  borderRadius: 'var(--radius-card)',
+  backdropFilter: 'var(--blur)',
+  WebkitBackdropFilter: 'var(--blur)',
   padding: 24,
 }
 
@@ -17,7 +19,7 @@ const fieldStyle: React.CSSProperties = {
   borderRadius: 11,
   fontSize: 13.5,
   color: 'var(--text-1)',
-  background: 'var(--bg-app)',
+  background: 'var(--bg-hover)',
 }
 
 export function SettingsView({ store }: { store: CrmStore }) {
@@ -119,7 +121,7 @@ export function SettingsView({ store }: { store: CrmStore }) {
           </div>
         </div>
         <button
-          style={{ background: 'var(--text-1)', color: 'var(--bg-card)', border: 'none', padding: '11px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          style={{ background: 'var(--text-1)', color: 'var(--on-invert)', border: 'none', padding: '11px 20px', borderRadius: 999, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >

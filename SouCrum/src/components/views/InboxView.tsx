@@ -18,7 +18,9 @@ export function InboxView({ store }: { store: CrmStore }) {
         background: 'var(--bg-card)',
         border: 'var(--card-border)',
         boxShadow: 'var(--card-shadow)',
-        borderRadius: 18,
+        borderRadius: 'var(--radius-card)',
+        backdropFilter: 'var(--blur)',
+        WebkitBackdropFilter: 'var(--blur)',
         overflow: 'hidden',
         animation: 'fadeUp .25s ease',
       }}
@@ -123,17 +125,30 @@ export function InboxView({ store }: { store: CrmStore }) {
                   flex: 1,
                   resize: 'none',
                   border: '1px solid var(--border)',
-                  borderRadius: 14,
-                  padding: '11px 14px',
+                  borderRadius: 18,
+                  padding: '12px 16px',
                   fontSize: 13.5,
-                  background: 'var(--bg-app)',
+                  background: 'var(--bg-hover)',
                   color: 'var(--text-1)',
                   outline: 'none',
                 }}
               />
               <button
                 onClick={store.sendReply}
-                style={{ background: 'var(--accent)', color: '#fff', border: 'none', width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                style={{
+                  background: 'var(--brand-gradient)',
+                  color: '#fff',
+                  border: 'none',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  boxShadow: '0 12px 26px -12px var(--accent-shadow)',
+                }}
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
               >

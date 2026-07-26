@@ -46,7 +46,7 @@ bibliotecas de componentes, zero CSS framework.
 | Arquivo | Papel |
 |---|---|
 | `src/App.tsx` | Shell: sidebar + topbar + view atual + modal de consentimento |
-| `src/theme.ts` | `lightTokens` / `darkTokens`, `rootVars(dark)`, `colorMap()` |
+| `src/theme.ts` | **Toda a aparência**: `lightTokens` / `darkTokens`, `rootVars(dark)`, `colorMap()` |
 | `src/data.ts` | Dados de exemplo (contatos, negócios, e-mails, time), `stageDefs`, `viewTitles` |
 | `src/types.ts` | Tipos do domínio |
 | `src/hooks/useCrmStore.ts` | Store central (useState) — navegação, dark mode, drag&drop, criação |
@@ -55,6 +55,42 @@ bibliotecas de componentes, zero CSS framework.
 | `src/components/EmailConsent.tsx` | Modal de permissão de e-mail + `useEmailConsent()` |
 | `src/components/views/McpSettings.tsx` | Seção MCP dentro de Configurações |
 | `src/components/views/*.tsx` | Dashboard, Inbox, Pipeline, Contacts, Settings, Placeholder |
+
+### Visual: vidro sobre brasa magenta
+
+O aspecto atual segue o protótipo de app esportivo que o usuário enviou: fundo
+ameixa quase preto com florações crimson/magenta, cartões de vidro, pílulas e
+títulos de peso misto.
+
+**Tudo isso vive em `src/theme.ts`.** Nenhuma view sabe que a aparência mudou —
+elas só leem `var(--...)`. Foi assim que este visual entrou sem reestruturar o
+app. Para trocar de aparência outra vez, mexa só nos tokens.
+
+| Token | Papel |
+|---|---|
+| `--bg-glow` | As florações radiais da raiz. **Fixas na viewport**, então posição acima de 100% cai fora do quadro e não aparece |
+| `--bg-card` / `--bg-elevated` | Vidro claro (`rgba(255,255,255,.07)`). Só lê como magenta porque a floração atrás é forte |
+| `--blur` | Desfoque do vidro, aplicado junto de `bg-card` |
+| `--radius-card` | 22px, o canto macio do visual |
+| `--brand-gradient` | Crimson → violeta, para selo, botão primário e barra em destaque |
+| `--on-invert` | Texto sobre pílula invertida (menu ativo, "Gerenciar plano") |
+
+Três armadilhas que esse esquema cria, e que já foram corrigidas:
+
+1. **Vidro em diálogo não funciona.** O modal de consentimento e o painel de
+   contato ficaram ilegíveis com `--bg-card` puro — o conteúdo atrás atravessava
+   o texto. Ambos usam agora `backgroundColor: var(--bg-app)` com
+   `backgroundImage: linear-gradient(var(--bg-card), var(--bg-card))`: mesmo tom
+   do vidro, sem transparência. **Qualquer sobreposição nova precisa disso.**
+2. **`--bg-card` não serve como cor de texto.** Antes era branco opaco e era
+   usado assim na pílula invertida; virou vidro e o rótulo desapareceu. Use
+   `--on-invert`.
+3. **Floração fraca vira cinza.** Com alpha baixo no `--bg-glow`, o vidro claro
+   dos cartões não tem o que filtrar e tudo fica cinza-chumbo.
+
+O modo claro é a mesma paleta em rosa-pálido — a cor do entorno do protótipo de
+referência, não um tema neutro. Padrão do app é o **escuro**
+(`useCrmStore`: `useState(true)`), porque o visual nasceu escuro.
 
 ### Tema: como as variáveis chegam ao DOM
 
@@ -313,3 +349,5 @@ curl -X POST $BASE -H "Authorization: Bearer <JWT>" \
 | `cd0fcb5` / `a6af080` | Seção MCP em Configurações + status real via `/health` |
 | `15b066c` | Notificações por Slack, Google Chat, Teams e e-mail no servidor MCP |
 | `8ab7eeb` | Notificação por e-mail multi-usuário com consentimento (Supabase) |
+| `7eea334` | Notificações restritas a tarefas vencidas e marcações |
+| (este) | Visual de vidro sobre brasa magenta, aplicado só via tokens |

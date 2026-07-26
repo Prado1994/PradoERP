@@ -21,13 +21,26 @@ export function App() {
   const consent = useEmailConsent()
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', minWidth: 1024, background: 'var(--bg-app)', ...cssVars(store.darkMode) }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        minWidth: 1024,
+        // O brilho magenta fica na raiz e atravessa a sidebar e a topbar, que
+        // são translúcidas. Por isso nenhuma camada acima pinta fundo opaco.
+        backgroundColor: 'var(--bg-app)',
+        backgroundImage: 'var(--bg-glow)',
+        backgroundAttachment: 'fixed',
+        color: 'var(--text-1)',
+        ...cssVars(store.darkMode),
+      }}
+    >
       <Sidebar store={store} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100vh', overflow: 'hidden' }}>
         <Topbar store={store} />
 
-        <main style={{ flex: 1, overflow: 'auto', padding: '26px 30px', background: 'var(--bg-app)' }}>
+        <main style={{ flex: 1, overflow: 'auto', padding: '26px 30px', background: 'transparent' }}>
           {view === 'dashboard' && <DashboardView store={store} />}
           {view === 'inbox' && <InboxView store={store} />}
           {view === 'pipeline' && <PipelineView store={store} />}

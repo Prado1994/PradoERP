@@ -8,7 +8,9 @@ const cardStyle: CSSProperties = {
   background: 'var(--bg-card)',
   border: 'var(--card-border)',
   boxShadow: 'var(--card-shadow)',
-  borderRadius: 18,
+  borderRadius: 'var(--radius-card)',
+  backdropFilter: 'var(--blur)',
+  WebkitBackdropFilter: 'var(--blur)',
   padding: 24,
 }
 
@@ -19,7 +21,7 @@ const inputStyle: CSSProperties = {
   borderRadius: 11,
   fontSize: 13.5,
   color: 'var(--text-1)',
-  background: 'var(--bg-app)',
+  background: 'var(--bg-hover)',
   outline: 'none',
 }
 
@@ -293,7 +295,7 @@ export function McpSettings() {
                   key={item.rotulo}
                   style={{
                     padding: '12px 14px',
-                    background: 'var(--bg-app)',
+                    background: 'var(--bg-hover)',
                     border: '1px solid var(--border)',
                     borderRadius: 12,
                   }}
@@ -493,7 +495,7 @@ export function McpSettings() {
           style={{
             margin: 0,
             padding: 16,
-            background: 'var(--bg-app)',
+            background: 'var(--bg-hover)',
             border: '1px solid var(--border)',
             borderRadius: 12,
             fontSize: 12,
