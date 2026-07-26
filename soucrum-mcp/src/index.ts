@@ -415,6 +415,153 @@ if (!READ_ONLY) {
   )
 }
 
+// -- Interoperabilidade: Gmail -------------------------------------------------
+//
+// O vínculo com o e-mail fica em `objects.attachments` (jsonb, hoje não usado
+// pelo app) no formato:
+//   { type: 'email', source: 'gmail', message_id, thread_id, from, subject, link }
+// A deduplicação usa containment jsonb (@>) por `message_id`, então reprocessar
+// a mesma caixa de entrada não gera cartões repetidos.
+
+/** Referência de e-mail gravada em attachments. */
+interface EmailRef {
+  type: 'email'
+  source: 'gmail'
+  message_id: string
+  thread_id?: string
+  from?: string
+  subject?: string
+  link?: string
+  received_at?: string
+}
+
+/** Permalink do Gmail para a mensagem. */
+function gmailLink(messageId: string): string {
+  return `https://mail.google.com/mail/u/0/#all/${messageId}`
+}
+
+server.tool(
+  'find_task_by_email',
+  'Verifica se um e-mail do Gmail já virou cartão no SouCrum. Use antes de criar, para não duplicar.',
+  { message_id: z.string().min(1).describe('ID da mensagem no Gmail') },
+  async ({ message_id }) => {
+    const { data, error } = await db
+      .from('objects')
+      .select('id, title, status, due_date, project_id, attachments')
+      .contains('attachments', [{ message_id }])
+      .limit(1)
+    if (error) return fail(error.message)
+    const found = data?.[0]
+    return ok(found ? { exists: true, task: found } : { exists: false })
+  },
+)
+
+server.tool(
+  'list_email_tasks',
+  'Lista os cartões que se originaram de e-mails, com o remetente e o link da mensagem.',
+  { limit: z.number().int().min(1).max(100).optional() },
+  async ({ limit }) => {
+    const { data, error } = await db
+      .from('objects')
+      .select('id, title, status, due_date, project_id, attachments, created_at')
+      .contains('attachments', [{ type: 'email' }])
+      .order('created_at', { ascending: false })
+      .limit(limit ?? 30)
+    if (error) return fail(error.message)
+    return ok(
+      (data ?? []).map((t) => {
+        const ref = ((t.attachments as EmailRef[] | null) ?? []).find((a) => a?.type === 'email')
+        return {
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          due_date: t.due_date,
+          from: ref?.from,
+          message_id: ref?.message_id,
+          link: ref?.link,
+        }
+      }),
+    )
+  },
+)
+
+if (!READ_ONLY) {
+  server.tool(
+    'create_task_from_email',
+    'Transforma um e-mail do Gmail em cartão do SouCrum, guardando o vínculo com a mensagem. É idempotente: se o e-mail já virou cartão, devolve o existente em vez de duplicar.',
+    {
+      message_id: z.string().min(1).describe('ID da mensagem no Gmail'),
+      subject: z.string().min(1).describe('Assunto — vira o título do cartão'),
+      from: z.string().optional().describe('Remetente (nome e/ou e-mail)'),
+      body: z.string().optional().describe('Corpo ou resumo do e-mail'),
+      thread_id: z.string().optional(),
+      received_at: z.string().optional().describe('Data ISO em que o e-mail chegou'),
+      link: z.string().optional().describe('Permalink. Se omitido, é montado a partir do message_id'),
+      project_id: z.string().uuid().optional(),
+      status: statusSchema.optional().describe('Padrão: jot (cai na captura)'),
+      due_date: z.string().optional().describe('YYYY-MM-DD'),
+      tags: z.array(z.string()).optional(),
+      checklist: z.array(z.string()).optional().describe('Passos a executar, extraídos do e-mail'),
+    },
+    async (input) => {
+      // Idempotência: se já existe cartão para esta mensagem, devolve-o.
+      const { data: existing, error: eFind } = await db
+        .from('objects')
+        .select('id, title, status, due_date')
+        .contains('attachments', [{ message_id: input.message_id }])
+        .limit(1)
+      if (eFind) return fail(eFind.message)
+      if (existing?.[0]) {
+        return ok({ created: false, reason: 'e-mail já vinculado a um cartão', task: existing[0] })
+      }
+
+      const ref: EmailRef = {
+        type: 'email',
+        source: 'gmail',
+        message_id: input.message_id,
+        thread_id: input.thread_id,
+        from: input.from,
+        subject: input.subject,
+        link: input.link ?? gmailLink(input.message_id),
+        received_at: input.received_at,
+      }
+
+      const corpo = [
+        input.from ? `**De:** ${input.from}` : null,
+        `[Abrir e-mail no Gmail](${ref.link})`,
+        input.body ? `\n---\n\n${input.body}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n')
+
+      // checklist segue a convenção do app: { id, done, text }
+      const checklist = (input.checklist ?? []).map((text, i) => ({
+        id: String(i + 1),
+        done: false,
+        text,
+      }))
+
+      const { data, error } = await db
+        .from('objects')
+        .insert({
+          title: input.subject,
+          body: corpo,
+          type: 'task',
+          status: input.status ?? 'jot',
+          project_id: input.project_id ?? null,
+          due_date: input.due_date ?? null,
+          tags: input.tags ?? [],
+          checklist,
+          attachments: [ref],
+        })
+        .select('id, title, status, due_date, project_id')
+        .single()
+      if (error) return fail(error.message)
+      return ok({ created: true, task: data, email_link: ref.link })
+    },
+  )
+}
+
 server.tool(
   'export_project_markdown',
   'Exporta um projeto inteiro (dados + cartões agrupados por status) em Markdown, pronto para virar página no Notion, Google Docs ou Drive.',

@@ -91,6 +91,29 @@ Criadas justamente para essa interoperabilidade:
 | `export_agenda_for_calendar` | Devolve cartões com prazo já no formato de evento do Google Calendar, marcando os que ainda **não** foram sincronizados |
 | `link_gcal_event` | Grava o `gcal_event_id` devolvido pelo Google, evitando duplicar na próxima sincronização |
 | `export_project_markdown` | Projeto + cartões agrupados por status em Markdown, pronto para virar página no Notion ou doc no Google |
+| `create_task_from_email` | Transforma e-mail do Gmail em cartão, guardando o vínculo com a mensagem |
+| `find_task_by_email` | Checa se um e-mail já virou cartão, antes de criar |
+| `list_email_tasks` | Lista os cartões que vieram de e-mail, com remetente e link |
+
+### Fluxo Gmail → SouCrum
+
+```
+gmail search_threads / get_message   (servidor do Google)
+        ↓  message_id, assunto, remetente, corpo
+create_task_from_email               (SouCrum)
+        ↓  grava em attachments: {type:email, source:gmail, message_id, link}
+```
+
+**Idempotente por desenho:** o `message_id` fica gravado em `attachments` e a
+ferramenta consulta antes de inserir (containment jsonb `@>`). Se você reprocessar
+a mesma caixa de entrada, ela devolve o cartão existente em vez de criar outro —
+então dá para rodar "triagem da inbox" quantas vezes quiser sem sujar o quadro.
+
+Exemplo de pedido:
+
+> "Veja os e-mails não lidos de fornecedores desta semana, transforme cada um em
+> cartão no projeto Compras com checklist de providências, e me diga quais já
+> existiam."
 
 > Nota: hoje **nenhum** dos 52 cartões tem `gcal_event_id` preenchido — a coluna
 > existia no schema mas a sincronização nunca foi usada. Essas ferramentas

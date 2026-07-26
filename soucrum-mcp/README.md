@@ -69,7 +69,7 @@ do Notion e do Google Workspace, não dentro deles. Configurações prontas para
 Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 **[`clients/`](clients/README.md)**.
 
-## Ferramentas (18)
+## Ferramentas (21)
 
 ### Leitura
 | Ferramenta | O que faz |
@@ -88,6 +88,8 @@ Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 | `project_transactions` | Lançamentos de um projeto, com total somado |
 | `export_agenda_for_calendar` | Cartões com prazo no formato de evento do Google Calendar |
 | `export_project_markdown` | Projeto + cartões em Markdown (Notion / Google Docs) |
+| `find_task_by_email` | Diz se um e-mail do Gmail já virou cartão (checagem anti-duplicata) |
+| `list_email_tasks` | Cartões originados de e-mail, com remetente e link da mensagem |
 
 ### Escrita (desativáveis via `SOUCRUM_READ_ONLY`)
 | Ferramenta | O que faz |
@@ -96,6 +98,7 @@ Claude Desktop, Claude Code, Gemini CLI e Cursor estão em
 | `update_task` | Atualiza cartão: status, prazo, responsável, agenda… |
 | `complete_routine` | Conclui o ciclo de uma rotina (grava `last_done`) |
 | `link_gcal_event` | Grava o `gcal_event_id` do evento criado no Google Calendar |
+| `create_task_from_email` | Transforma e-mail do Gmail em cartão — **idempotente**, não duplica |
 
 ## Modelo de dados
 
@@ -111,6 +114,17 @@ Vocabulário verificado no banco de produção:
 
 Tabelas expostas: `workspaces`, `workspace_members`, `projects`, `objects`,
 `pages`, `activity`, `notifications`, `transactions`.
+
+### Vínculos externos
+
+| Onde fica | Para quê |
+|---|---|
+| `objects.gcal_event_id` | ID do evento no Google Calendar (coluna já existia, estava vazia) |
+| `objects.attachments` | Referência do e-mail: `{type:'email', source:'gmail', message_id, thread_id, from, subject, link}` |
+
+Ambos servem de **chave de idempotência**: as ferramentas consultam esses campos
+antes de criar, então sincronizar duas vezes não duplica nada.
+`checklist` segue a convenção do app: `[{ id, done, text }]`.
 
 ## Exemplos de uso
 
