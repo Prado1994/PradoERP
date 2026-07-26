@@ -79,14 +79,45 @@ const eisenhowerSchema = z
 // Servidor e ferramentas
 // ---------------------------------------------------------------------------
 
+const SERVER_NAME = 'soucrum'
+const SERVER_VERSION = '0.1.0'
+
 const server = new McpServer({
-  name: 'soucrum',
-  version: '0.1.0',
+  name: SERVER_NAME,
+  version: SERVER_VERSION,
 })
+
+/** Ferramentas que alteram dados — usado para rotular o /health. */
+const WRITE_TOOLS = new Set([
+  'create_task',
+  'update_task',
+  'complete_routine',
+  'link_gcal_event',
+  'create_task_from_email',
+])
+
+/** Catálogo das ferramentas registradas, exposto pelo endpoint /health. */
+const registeredTools: { name: string; description: string; write: boolean }[] = []
+
+/**
+ * Registra a ferramenta no servidor MCP e no catálogo, para que o endpoint
+ * /health possa listar exatamente o que está ativo.
+ */
+function reg<S extends z.ZodRawShape>(
+  name: string,
+  description: string,
+  schema: S,
+  handler: (args: z.infer<z.ZodObject<S>>) => ToolResult | Promise<ToolResult>,
+): void {
+  registeredTools.push({ name, description, write: WRITE_TOOLS.has(name) })
+  // server.tool é sobrecarregado; o cast preserva a inferência feita acima.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(server.tool as any)(name, description, schema, handler)
+}
 
 // -- Workspaces --------------------------------------------------------------
 
-server.tool(
+reg(
   'list_workspaces',
   'Lista os workspaces do SouCrum com seus membros.',
   {},
@@ -102,7 +133,7 @@ server.tool(
 
 // -- Projetos ----------------------------------------------------------------
 
-server.tool(
+reg(
   'list_projects',
   'Lista projetos (nome, cor, prazo, workspace). Filtre opcionalmente por workspace_id.',
   { workspace_id: z.string().uuid().optional().describe('UUID do workspace para filtrar') },
@@ -118,7 +149,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'project_summary',
   'Resumo de um projeto: contagem de tarefas por status, atrasadas e próximas do prazo.',
   { project_id: z.string().uuid().describe('UUID do projeto') },
@@ -153,7 +184,7 @@ server.tool(
 
 // -- Tarefas / cartões (objects) ----------------------------------------------
 
-server.tool(
+reg(
   'search_tasks',
   'Busca tarefas/cartões por texto, status, projeto, tag, área ou responsável. Retorna no máximo `limit` resultados (padrão 25).',
   {
@@ -185,7 +216,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'get_task',
   'Detalhe completo de uma tarefa/cartão: corpo, checklist, comentários, anexos, pomodoros e subtarefas.',
   { task_id: z.string().uuid().describe('UUID da tarefa') },
@@ -200,7 +231,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'today_agenda',
   'Agenda de hoje: cartões com vencimento hoje, atrasados, fixados na agenda e rotinas pendentes do dia.',
   {},
@@ -243,7 +274,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'list_routines',
   'Lista rotinas (cartões recorrentes) e indica se o ciclo atual já foi concluído.',
   {
@@ -264,7 +295,7 @@ server.tool(
 )
 
 if (!READ_ONLY) {
-  server.tool(
+  reg(
     'create_task',
     'Cria uma tarefa/cartão. owner_id é definido pela sessão (JWT) ou deve existir política que permita o insert.',
     {
@@ -303,7 +334,7 @@ if (!READ_ONLY) {
     },
   )
 
-  server.tool(
+  reg(
     'update_task',
     'Atualiza campos de uma tarefa (mover de coluna = mudar status, definir prazo, responsável etc.).',
     {
@@ -332,7 +363,7 @@ if (!READ_ONLY) {
     },
   )
 
-  server.tool(
+  reg(
     'complete_routine',
     'Marca o ciclo atual de uma rotina como concluído, registrando a data em last_done.',
     {
@@ -361,7 +392,7 @@ if (!READ_ONLY) {
 // servidores (SouCrum + Google Calendar + Notion) sem que este servidor precise
 // de credenciais de terceiros.
 
-server.tool(
+reg(
   'export_agenda_for_calendar',
   'Exporta cartões com prazo como eventos prontos para criar no Google Calendar. Já indica quais ainda não foram sincronizados (gcal_event_id vazio). Depois de criar o evento, chame link_gcal_event para gravar o vínculo.',
   {
@@ -395,7 +426,7 @@ server.tool(
 )
 
 if (!READ_ONLY) {
-  server.tool(
+  reg(
     'link_gcal_event',
     'Grava no cartão o ID do evento criado no Google Calendar, para não duplicar em sincronizações futuras.',
     {
@@ -440,7 +471,7 @@ function gmailLink(messageId: string): string {
   return `https://mail.google.com/mail/u/0/#all/${messageId}`
 }
 
-server.tool(
+reg(
   'find_task_by_email',
   'Verifica se um e-mail do Gmail já virou cartão no SouCrum. Use antes de criar, para não duplicar.',
   { message_id: z.string().min(1).describe('ID da mensagem no Gmail') },
@@ -456,7 +487,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'list_email_tasks',
   'Lista os cartões que se originaram de e-mails, com o remetente e o link da mensagem.',
   { limit: z.number().int().min(1).max(100).optional() },
@@ -486,7 +517,7 @@ server.tool(
 )
 
 if (!READ_ONLY) {
-  server.tool(
+  reg(
     'create_task_from_email',
     'Transforma um e-mail do Gmail em cartão do SouCrum, guardando o vínculo com a mensagem. É idempotente: se o e-mail já virou cartão, devolve o existente em vez de duplicar.',
     {
@@ -562,7 +593,7 @@ if (!READ_ONLY) {
   )
 }
 
-server.tool(
+reg(
   'export_project_markdown',
   'Exporta um projeto inteiro (dados + cartões agrupados por status) em Markdown, pronto para virar página no Notion, Google Docs ou Drive.',
   {
@@ -613,7 +644,7 @@ server.tool(
 
 // -- Páginas (documentos) ------------------------------------------------------
 
-server.tool(
+reg(
   'list_pages',
   'Lista páginas/documentos, opcionalmente por projeto.',
   { project_id: z.string().uuid().optional() },
@@ -626,7 +657,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'read_page',
   'Lê o conteúdo de uma página/documento.',
   { page_id: z.string().uuid() },
@@ -639,7 +670,7 @@ server.tool(
 
 // -- Atividade e notificações --------------------------------------------------
 
-server.tool(
+reg(
   'recent_activity',
   'Feed de atividade recente (quem fez o quê). Padrão: 30 eventos.',
   {
@@ -659,7 +690,7 @@ server.tool(
   },
 )
 
-server.tool(
+reg(
   'unread_notifications',
   'Notificações não lidas.',
   {},
@@ -676,7 +707,7 @@ server.tool(
 
 // -- Transações (financeiro por projeto) ----------------------------------------
 
-server.tool(
+reg(
   'project_transactions',
   'Lista transações (lançamentos) de um projeto, com soma total.',
   { project_id: z.string().uuid() },
@@ -693,11 +724,131 @@ server.tool(
 )
 
 // ---------------------------------------------------------------------------
+// Endpoint de health (opcional)
+// ---------------------------------------------------------------------------
+//
+// Ativado com SOUCRUM_HTTP_PORT. Serve GET /health para a tela de
+// Configurações do SouCrum mostrar o estado real da conexão: versão, modo,
+// ferramentas ativas e se o Supabase responde.
+//
+// NÃO expõe a chave nem dado de negócio — só metadados do servidor.
+
+const HTTP_PORT = Number(process.env.SOUCRUM_HTTP_PORT ?? 0)
+
+/** Origens remotas liberadas. Localhost é aceito em qualquer porta (ver abaixo). */
+const ALLOWED_ORIGINS = (process.env.SOUCRUM_HTTP_ALLOWED_ORIGINS ?? 'https://soucrum.vercel.app')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
+/**
+ * Aceita qualquer porta de localhost/127.0.0.1 — o app pode rodar em 5173, 4173
+ * ou qualquer porta de dev, e tudo isso é a própria máquina do usuário. Sites da
+ * internet continuam bloqueados, a menos que listados em
+ * SOUCRUM_HTTP_ALLOWED_ORIGINS.
+ */
+function originPermitida(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  try {
+    const { hostname, protocol } = new URL(origin)
+    return protocol === 'http:' && (hostname === 'localhost' || hostname === '127.0.0.1')
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Em falha de rede o supabase-js devolve `message` vazio e joga o motivo em
+ * `details`/`code`. Sem isso a tela mostraria "não conecta" sem explicar por quê.
+ */
+function describeError(error: { message?: string; details?: string; hint?: string; code?: string }): string {
+  const parts = [error.message, error.details, error.hint].filter((p) => p && p.trim() !== '')
+  const texto = parts.join(' · ')
+  if (texto) return error.code ? `${texto} (${error.code})` : texto
+  return error.code ? `falha na requisição (${error.code})` : 'falha ao conectar no Supabase'
+}
+
+/** Confere se o Supabase responde, sem trazer dados. */
+async function checkSupabase(): Promise<{ reachable: boolean; latency_ms: number; error?: string }> {
+  const started = Date.now()
+  try {
+    const { error } = await db.from('projects').select('id', { count: 'exact', head: true }).limit(1)
+    const latency_ms = Date.now() - started
+    if (error) return { reachable: false, latency_ms, error: describeError(error) }
+    return { reachable: true, latency_ms }
+  } catch (e) {
+    return {
+      reachable: false,
+      latency_ms: Date.now() - started,
+      error: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+    }
+  }
+}
+
+function startHealthServer(port: number): void {
+  // Import dinâmico: quem não usa o health não carrega o módulo http.
+  import('node:http')
+    .then(({ createServer }) => {
+      const httpServer = createServer(async (req, res) => {
+        const origin = req.headers.origin
+        // Só devolve CORS para origens conhecidas — evita que qualquer site
+        // sonde a porta e descubra que o servidor está rodando aqui.
+        if (origin && originPermitida(origin)) {
+          res.setHeader('Access-Control-Allow-Origin', origin)
+          res.setHeader('Vary', 'Origin')
+        }
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204).end()
+          return
+        }
+        if (req.method !== 'GET' || !req.url?.startsWith('/health')) {
+          res.writeHead(404, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'not found' }))
+          return
+        }
+
+        const supabase = await checkSupabase()
+        const body = {
+          ok: supabase.reachable,
+          name: SERVER_NAME,
+          version: SERVER_VERSION,
+          mode: READ_ONLY ? 'read-only' : 'read-write',
+          auth: USER_JWT ? 'user-jwt' : 'direct-key',
+          supabase: { url: SUPABASE_URL, ...supabase },
+          tool_count: registeredTools.length,
+          write_tool_count: registeredTools.filter((t) => t.write).length,
+          tools: registeredTools,
+          checked_at: new Date().toISOString(),
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' })
+        res.end(JSON.stringify(body))
+      })
+
+      httpServer.on('error', (err) => {
+        console.error(`[soucrum-mcp] health indisponível na porta ${port}: ${err.message}`)
+      })
+      // Escuta apenas em loopback: nada exposto na rede local.
+      httpServer.listen(port, '127.0.0.1', () => {
+        console.error(`[soucrum-mcp] health em http://127.0.0.1:${port}/health`)
+      })
+    })
+    .catch((err) => {
+      console.error(`[soucrum-mcp] falha ao iniciar health: ${String(err)}`)
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 
 const transport = new StdioServerTransport()
 await server.connect(transport)
+
+if (HTTP_PORT > 0) startHealthServer(HTTP_PORT)
+
 console.error(
-  `[soucrum-mcp] pronto — url=${SUPABASE_URL} modo=${READ_ONLY ? 'somente-leitura' : 'leitura-escrita'} auth=${USER_JWT ? 'jwt-usuario' : 'chave-direta'}`,
+  `[soucrum-mcp] pronto — url=${SUPABASE_URL} modo=${READ_ONLY ? 'somente-leitura' : 'leitura-escrita'} auth=${USER_JWT ? 'jwt-usuario' : 'chave-direta'} ferramentas=${registeredTools.length}`,
 )

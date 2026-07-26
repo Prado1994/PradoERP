@@ -36,6 +36,27 @@ SOUCRUM_SUPABASE_KEY=<sua chave>
 
 Opcional: `SOUCRUM_READ_ONLY=true` desativa todas as ferramentas de escrita.
 
+### Endpoint de status (opcional)
+
+Com `SOUCRUM_HTTP_PORT=7757`, o servidor abre `GET /health` em `127.0.0.1` para a
+tela **Configurações → Status do servidor** do SouCrum mostrar o estado real:
+
+```bash
+curl -s http://127.0.0.1:7757/health | jq '{ok, version, mode, tool_count, supabase}'
+```
+
+```json
+{ "ok": true, "version": "0.1.0", "mode": "read-write", "tool_count": 21,
+  "supabase": { "reachable": true, "latency_ms": 84 } }
+```
+
+- Escuta **só em loopback** — nada exposto na rede local.
+- Devolve apenas metadados: versão, modo, nomes das ferramentas e se o banco
+  responde. **Nunca** a chave nem dados de negócio.
+- CORS: qualquer porta de `localhost`/`127.0.0.1` é aceita (é a sua máquina);
+  origens da internet só com `SOUCRUM_HTTP_ALLOWED_ORIGINS`.
+- Sem a variável, nenhuma porta é aberta.
+
 ### Registrar no Claude Desktop
 
 Em `claude_desktop_config.json`:

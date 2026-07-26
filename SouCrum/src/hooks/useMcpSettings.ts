@@ -14,6 +14,8 @@ export interface McpSettings {
   publishableKey: string
   /** Caminho do servidor MCP na máquina do usuário. */
   serverPath: string
+  /** Porta do endpoint /health local. 0 desliga a verificação de status. */
+  healthPort: number
   /** Quando ligado, o assistente só lê — nenhuma ferramenta de escrita é exposta. */
   readOnly: boolean
   /** Serviços externos que o assistente pode alcançar junto com o SouCrum. */
@@ -26,6 +28,7 @@ export const defaultMcpSettings: McpSettings = {
   supabaseUrl: '',
   publishableKey: '',
   serverPath: '/caminho/para/soucrum-mcp/dist/index.js',
+  healthPort: 7757,
   readOnly: false,
   services: { notion: false, googleCalendar: false, gmail: false, googleDrive: false },
 }
@@ -81,6 +84,7 @@ export function buildMcpConfig(s: McpSettings): string {
         SOUCRUM_SUPABASE_URL: s.supabaseUrl || 'https://SEU-PROJETO.supabase.co',
         SOUCRUM_SUPABASE_KEY: s.publishableKey || 'sb_publishable_SUA_CHAVE',
         ...(s.readOnly ? { SOUCRUM_READ_ONLY: 'true' } : {}),
+        ...(s.healthPort > 0 ? { SOUCRUM_HTTP_PORT: String(s.healthPort) } : {}),
       },
     },
   }

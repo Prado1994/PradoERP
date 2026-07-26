@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { buildMcpConfig, useMcpSettings } from '../../hooks/useMcpSettings'
 import type { McpServices } from '../../hooks/useMcpSettings'
+import { useMcpHealth } from '../../hooks/useMcpHealth'
 
 const cardStyle: CSSProperties = {
   background: 'var(--bg-card)',
@@ -74,6 +75,8 @@ export function McpSettings() {
   const { settings, update, toggleService, reset } = useMcpSettings()
   const [mostrarChave, setMostrarChave] = useState(false)
   const [copiado, setCopiado] = useState(false)
+  const [verFerramentas, setVerFerramentas] = useState(false)
+  const { state: health, check } = useMcpHealth(settings.healthPort)
 
   const configurado = settings.supabaseUrl.trim() !== '' && settings.publishableKey.trim() !== ''
   // service_role tem "role":"service_role" no payload; a publicável começa com sb_publishable_.
@@ -194,6 +197,164 @@ export function McpSettings() {
             <Toggle on={settings.readOnly} onClick={() => update('readOnly', !settings.readOnly)} />
           </div>
         </div>
+      </div>
+
+      {/* Status da conexão */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>Status do servidor</div>
+          <button
+            onClick={check}
+            disabled={health.status === 'loading'}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border)',
+              color: 'var(--text-2)',
+              padding: '7px 14px',
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: 12.5,
+              cursor: health.status === 'loading' ? 'default' : 'pointer',
+              opacity: health.status === 'loading' ? 0.6 : 1,
+            }}
+          >
+            {health.status === 'loading' ? 'Verificando…' : 'Testar conexão'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>Porta do endpoint de status</div>
+            <input
+              type="number"
+              value={settings.healthPort || ''}
+              onChange={(e) => update('healthPort', Number(e.target.value) || 0)}
+              placeholder="7757"
+              style={{ ...inputStyle, maxWidth: 160 }}
+            />
+          </div>
+        </div>
+
+        {health.status === 'idle' && (
+          <div style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.5 }}>
+            Rode o servidor com <code>SOUCRUM_HTTP_PORT={settings.healthPort || 7757}</code> e clique em
+            Testar conexão para ver as ferramentas ativas.
+          </div>
+        )}
+
+        {health.status === 'error' && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: 12,
+              background: 'var(--accent-soft)',
+              color: 'var(--accent-strong)',
+              fontSize: 12.5,
+              lineHeight: 1.5,
+            }}
+          >
+            <strong>{health.message}</strong>
+            {health.hint && <div style={{ marginTop: 6, fontWeight: 500 }}>{health.hint}</div>}
+          </div>
+        )}
+
+        {health.status === 'ok' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
+              {[
+                { rotulo: 'Servidor', valor: `v${health.data.version}` },
+                {
+                  rotulo: 'Modo',
+                  valor: health.data.mode === 'read-only' ? 'Somente leitura' : 'Leitura e escrita',
+                },
+                {
+                  rotulo: 'Ferramentas',
+                  valor: `${health.data.tool_count} (${health.data.write_tool_count} de escrita)`,
+                },
+                {
+                  rotulo: 'Banco',
+                  valor: health.data.supabase.reachable
+                    ? `Conectado · ${health.data.supabase.latency_ms} ms`
+                    : 'Sem conexão',
+                },
+              ].map((item) => (
+                <div
+                  key={item.rotulo}
+                  style={{
+                    padding: '12px 14px',
+                    background: 'var(--bg-app)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 600 }}>{item.rotulo}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)', marginTop: 4 }}>
+                    {item.valor}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!health.data.supabase.reachable && (
+              <div
+                style={{
+                  padding: '11px 13px',
+                  borderRadius: 11,
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent-strong)',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                }}
+              >
+                O servidor está de pé, mas não alcançou o banco
+                {health.data.supabase.error ? ` — ${health.data.supabase.error}.` : '.'} Confira a URL e a
+                chave acima.
+              </div>
+            )}
+
+            <div>
+              <div
+                onClick={() => setVerFerramentas((v) => !v)}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: 'var(--violet)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                {verFerramentas ? 'Ocultar' : 'Ver'} as {health.data.tool_count} ferramentas
+              </div>
+              {verFerramentas && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {health.data.tools.map((t) => (
+                    <span
+                      key={t.name}
+                      title={t.description}
+                      style={{
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        padding: '4px 9px',
+                        borderRadius: 20,
+                        background: t.write ? 'var(--accent-soft)' : 'var(--bg-hover)',
+                        color: t.write ? 'var(--accent-strong)' : 'var(--text-2)',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                      }}
+                    >
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
+              Verificado às {new Date(health.data.checked_at).toLocaleTimeString('pt-BR')} · as etiquetas
+              em destaque alteram dados
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Serviços conectados */}
