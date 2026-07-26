@@ -2,18 +2,18 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
- * Envia notificação por e-mail para o usuário autenticado.
+ * Notificações por e-mail do SouCrum. Apenas dois tipos:
+ *   kind="overdue"  → tarefas vencidas
+ *   kind="mentions" → marcações (notifications.type = 'mention')
  *
- * Regras de segurança:
- * - Exige JWT válido (verify_jwt). O usuário é identificado pelo token.
- * - O destinatário NUNCA vem do cliente: usamos o e-mail do próprio usuário
- *   autenticado. Isso impede que alguém com login use esta função (e a conta
- *   da Resend) como relé de spam.
- * - Só envia se o usuário tiver dado consentimento (email_enabled + consent_at).
- * - A chave da Resend fica no secret RESEND_API_KEY, nunca no navegador.
- *
- * Secrets necessários (Dashboard > Edge Functions > Secrets):
- *   RESEND_API_KEY, NOTIFY_EMAIL_FROM, NOTIFY_APP_URL (opcional)
+ * Segurança:
+ * - Exige JWT válido. O usuário vem do token, nunca do corpo.
+ * - Destinatário é sempre o e-mail do usuário autenticado, o que impede usar
+ *   esta função (e a conta da Resend) como relé de spam.
+ * - Só envia com consentimento (email_enabled + consent_at) e se a preferência
+ *   daquele tipo estiver ligada.
+ * - Marcação já avisada não é reenviada (last_mention_email_at).
+ * - A chave da Resend fica em secret do projeto.
  */
 
 const CORS = {
@@ -33,6 +33,8 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+type Kind = 'overdue' | 'mentions' | 'test'
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   if (req.method !== 'POST') return json({ error: 'use POST' }, 405)
@@ -46,7 +48,6 @@ Deno.serve(async (req: Request) => {
   const emailFrom = Deno.env.get('NOTIFY_EMAIL_FROM') ?? 'onboarding@resend.dev'
   const appUrl = Deno.env.get('NOTIFY_APP_URL') ?? 'https://soucrum.vercel.app'
 
-  // Cliente com o token do usuário: RLS vale, e cada um só vê o que é seu.
   const db = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   })
@@ -55,65 +56,96 @@ Deno.serve(async (req: Request) => {
   if (userErr || !userData?.user) return json({ error: 'token inválido' }, 401)
   const user = userData.user
 
-  let payload: { kind?: string; title?: string; body?: string; dry_run?: boolean } = {}
+  let payload: { kind?: Kind; dry_run?: boolean } = {}
   try {
     payload = await req.json()
   } catch {
-    // corpo vazio é aceitável para o resumo padrão
+    // corpo vazio: trata como teste
   }
-  const kind = payload.kind ?? 'test'
+  const kind: Kind = payload.kind ?? 'test'
+  if (!['overdue', 'mentions', 'test'].includes(kind)) {
+    return json({ error: 'kind deve ser overdue, mentions ou test' }, 400)
+  }
 
-  // 1. Consentimento
+  // 1. Consentimento e preferência do tipo
   const { data: prefs, error: prefsErr } = await db
     .from('notification_prefs')
-    .select('email, email_enabled, consent_at, overdue_daily')
+    .select('email, email_enabled, consent_at, overdue_enabled, mentions_enabled, last_mention_email_at')
     .eq('user_id', user.id)
     .maybeSingle()
   if (prefsErr) return json({ error: `falha ao ler preferências: ${prefsErr.message}` }, 500)
   if (!prefs || !prefs.email_enabled || !prefs.consent_at) {
     return json({ sent: false, reason: 'usuário não autorizou notificações por e-mail' }, 403)
   }
+  if (kind === 'overdue' && !prefs.overdue_enabled) {
+    return json({ sent: false, reason: 'avisos de tarefas vencidas desligados' })
+  }
+  if (kind === 'mentions' && !prefs.mentions_enabled) {
+    return json({ sent: false, reason: 'avisos de marcações desligados' })
+  }
 
-  // 2. Destinatário: sempre o e-mail do usuário autenticado.
   const destino = user.email ?? prefs.email
   if (!destino) return json({ error: 'usuário sem e-mail' }, 400)
 
-  // 3. Monta o conteúdo
-  let title = payload.title ?? 'SouCrum'
-  let body = payload.body ?? ''
+  // 2. Conteúdo
+  let title = 'SouCrum'
+  let body = ''
+  let marcadorNovo: string | null = null
 
   if (kind === 'overdue') {
     const hoje = new Date().toISOString().slice(0, 10)
-    const { data: atrasadas, error: e } = await db
+    const { data: tarefas, error } = await db
       .from('objects')
       .select('title, due_date, assignee, last_done')
       .lt('due_date', hoje)
       .order('due_date')
       .limit(20)
-    if (e) return json({ error: `falha ao buscar tarefas: ${e.message}` }, 500)
-    const lista = (atrasadas ?? []).filter((t) => t.last_done !== hoje)
-    if (lista.length === 0) return json({ sent: false, reason: 'nenhuma tarefa atrasada' })
-    title = `SouCrum: ${lista.length} ${lista.length === 1 ? 'tarefa atrasada' : 'tarefas atrasadas'}`
+    if (error) return json({ error: `falha ao buscar tarefas: ${error.message}` }, 500)
+    // Rotina cujo ciclo foi concluido hoje nao e atraso.
+    const lista = (tarefas ?? []).filter((t) => t.last_done !== hoje)
+    if (lista.length === 0) return json({ sent: false, reason: 'nenhuma tarefa vencida' })
+    title = `SouCrum: ${lista.length} ${lista.length === 1 ? 'tarefa vencida' : 'tarefas vencidas'}`
     body = lista
       .map((t) => {
         const dias = Math.round((Date.parse(hoje) - Date.parse(t.due_date as string)) / 86400000)
-        return `• ${t.title} — ${dias} ${dias === 1 ? 'dia' : 'dias'} de atraso`
+        const quem = t.assignee ? ` · ${t.assignee}` : ''
+        return `• ${t.title} — ${dias} ${dias === 1 ? 'dia' : 'dias'} de atraso${quem}`
       })
       .join('\n')
-  } else if (kind === 'test') {
+  } else if (kind === 'mentions') {
+    // Só marcações não lidas e mais novas que a última já enviada por e-mail.
+    let q = db
+      .from('notifications')
+      .select('message, actor_email, created_at, type')
+      .eq('user_id', user.id)
+      .eq('read', false)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (prefs.last_mention_email_at) q = q.gt('created_at', prefs.last_mention_email_at)
+    const { data: marcacoes, error } = await q
+    if (error) return json({ error: `falha ao buscar marcações: ${error.message}` }, 500)
+    if (!marcacoes || marcacoes.length === 0) {
+      return json({ sent: false, reason: 'nenhuma marcação nova' })
+    }
+    marcadorNovo = marcacoes[0].created_at as string
+    title =
+      marcacoes.length === 1
+        ? 'SouCrum: você foi marcado'
+        : `SouCrum: ${marcacoes.length} marcações novas`
+    body = marcacoes
+      .map((m) => `• ${m.actor_email ?? 'Alguém'}: ${m.message}`)
+      .join('\n')
+  } else {
     title = 'SouCrum: teste de notificação'
     body = 'Se você recebeu este e-mail, as notificações do SouCrum estão funcionando.'
   }
 
   if (payload.dry_run) {
-    return json({ sent: false, dry_run: true, to: destino, title, body })
+    return json({ sent: false, dry_run: true, to: destino, kind, title, body })
   }
+  if (!resendKey) return json({ error: 'RESEND_API_KEY não configurada no projeto' }, 500)
 
-  if (!resendKey) {
-    return json({ error: 'RESEND_API_KEY não configurada no projeto' }, 500)
-  }
-
-  // 4. Envia
+  // 3. Envia
   const html = [
     '<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#171717">',
     `<h2 style="margin:0 0 12px;font-size:18px">${escapeHtml(title)}</h2>`,
@@ -132,16 +164,13 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({ from: emailFrom, to: [destino], subject: title, text: body, html }),
     })
     const texto = await r.text()
-    if (r.ok) {
-      status = 'enviado'
-    } else {
-      erro = `${r.status}: ${texto.slice(0, 300)}`
-    }
+    if (r.ok) status = 'enviado'
+    else erro = `${r.status}: ${texto.slice(0, 300)}`
   } catch (e) {
     erro = e instanceof Error ? e.message : String(e)
   }
 
-  // 5. Audita (service role para gravar mesmo com RLS de select)
+  // 4. Auditoria e marcador anti-reenvio
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   if (serviceKey) {
     const admin = createClient(supabaseUrl, serviceKey)
@@ -153,9 +182,16 @@ Deno.serve(async (req: Request) => {
       status,
       error: erro,
     })
+    // Só avança o marcador se realmente enviou, para não perder marcação.
+    if (status === 'enviado' && marcadorNovo) {
+      await admin
+        .from('notification_prefs')
+        .update({ last_mention_email_at: marcadorNovo })
+        .eq('user_id', user.id)
+    }
   }
 
   return status === 'enviado'
-    ? json({ sent: true, to: destino, title })
+    ? json({ sent: true, to: destino, kind, title })
     : json({ sent: false, error: erro }, 502)
 })

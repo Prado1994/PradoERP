@@ -112,14 +112,19 @@ export function EmailConsentDialog({
         </h2>
 
         <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.6, marginTop: 10 }}>
-          O SouCrum pode te avisar sobre tarefas atrasadas e prazos que estão chegando. Os e-mails vão
-          apenas para <strong style={{ color: 'var(--text-1)' }}>{email}</strong>.
+          São só dois avisos, e os e-mails vão apenas para{' '}
+          <strong style={{ color: 'var(--text-1)' }}>{email}</strong>.
         </p>
 
         <ul style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.7, paddingLeft: 18, marginTop: 12 }}>
-          <li>Um resumo por dia, no máximo — sem spam</li>
-          <li>Você pode desligar quando quiser em Configurações</li>
-          <li>Seu e-mail não é compartilhado com ninguém</li>
+          <li>
+            <strong style={{ color: 'var(--text-2)' }}>Tarefas vencidas</strong> — um resumo do que
+            passou do prazo
+          </li>
+          <li>
+            <strong style={{ color: 'var(--text-2)' }}>Marcações</strong> — quando alguém te marca
+          </li>
+          <li>Nada além disso. Você desliga quando quiser em Configurações</li>
         </ul>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
