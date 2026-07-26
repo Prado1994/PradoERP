@@ -1,6 +1,6 @@
 {
   "name": "soucrum-mcp",
-  "version": "0.1.0",
+  "version": "6.1.0",
   "description": "Servidor MCP do SouCrum — expõe workspaces, projetos, tarefas, agenda e atividade para assistentes de IA",
   "type": "module",
   "bin": {

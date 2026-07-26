@@ -3,7 +3,7 @@
 Documento de continuidade: onde está cada coisa, como rodar, o que já funciona,
 o que está pendente e as decisões que não devem ser desfeitas sem pensar.
 
-Última atualização: 2026-07-26 · branch `claude/scrum-update-fmrmf3`
+Versão **6.1** · última atualização 2026-07-26 · branch `claude/scrum-update-fmrmf3`
 
 ---
 
@@ -13,16 +13,43 @@ o que está pendente e as decisões que não devem ser desfeitas sem pensar.
 PradoERP/
 ├── SouCrum/          front-end React + Vite + TypeScript (protótipo da UI)
 ├── soucrum-mcp/      servidor MCP (Node, stdio) — 24 ferramentas
-└── supabase/         migrações + Edge Function de notificação
+└── supabase/
+    ├── migrations/   migrações incrementais do banco ANTIGO
+    ├── functions/    Edge Function de notificação
+    └── v6.1/         esquema completo do ambiente novo (ver README de lá)
 ```
 
 Além disso, o **app real** do usuário (o que está em `soucrum.vercel.app`, com
-login e banco) **não está neste repositório**. O que existe aqui em `SouCrum/`
-é o protótipo da nova UI, criado a partir do design `SouCrum_CRM.dc.html`.
+login e dados de verdade) **não está neste repositório**. O que existe aqui em
+`SouCrum/` é o protótipo da nova UI, criado a partir do design
+`SouCrum_CRM.dc.html`.
+
+### ⚠️ Como o app real é publicado
+
+Ele **não vem do Git**. Verificado no painel da Vercel: os 34 deploys mais
+recentes do projeto `soucrum` foram todos feitos por `vercel deploy` (CLI, upload
+de arquivos), nenhum com commit associado. O código vive na máquina do usuário.
+
+O repositório `Prado1994/PradoERP` foi ligado ao projeto Vercel em 26/07, mas
+com **branch de produção `claude/ios-automotive-dashboard-lqgubc` e Root
+Directory vazio** — e não existe app web na raiz do repositório.
+
+> ⚠️ **Um push naquela branch dispara build da raiz do repo e pode derrubar a
+> produção.** Não empurre para `claude/ios-automotive-dashboard-lqgubc`. Trabalhe
+> em branch própria (esta é `claude/scrum-update-fmrmf3`), que não dispara nada.
 
 > ⚠️ **Não faça deploy de `SouCrum/` no projeto Vercel `soucrum`.** Isso já
-> aconteceu uma vez e sobrescreveu o app de produção do usuário. O banco não foi
-> afetado, mas o front foi. Se precisar publicar, crie um projeto Vercel novo.
+> aconteceu e substituiu o front de produção. O banco não foi afetado.
+> Se precisar publicar o protótipo, crie um projeto Vercel novo.
+
+### O protótipo não é o app real
+
+Vale dizer com clareza: o modelo de dados do banco (`objects` com fluxo
+jot→scheduled, rotinas, pomodoro, eisenhower, workspaces, páginas, transações)
+é de um **gestor de tarefas e projetos**. O protótipo em `SouCrum/` é um **CRM**
+(contatos, negócios, pipeline, caixa de entrada). São aplicações diferentes —
+aplicar a UI nova no app real é levar os tokens de tema e os ajustes de
+componente para o código dele, não publicar esta pasta.
 
 ---
 
@@ -210,8 +237,17 @@ UI gera o mesmo JSON em Configurações → MCP.
 
 ## 4. Backend (`supabase/`)
 
-Projeto `sbyivwkcvjkropoforqx`, região `sa-east-1`, Postgres 17.6.
-Detalhes completos em [`supabase/README.md`](supabase/README.md).
+Dois projetos, e o antigo **continua sendo o de produção**:
+
+| | Projeto | Papel |
+|---|---|---|
+| Antigo | `sbyivwkcvjkropoforqx` | **Em produção.** Serve o app real. Intacto. |
+| v6.1 | `njlnvcrcoebbednfrzhr` | Ambiente novo, carregado do antigo. Ninguém usa ainda. |
+
+Ambos em `sa-east-1`, Postgres 17.6. O v6.1 saiu de graça (plano gratuito).
+
+- Esquema e migração do v6.1: [`supabase/v6.1/README.md`](supabase/v6.1/README.md)
+- Notificações por e-mail: [`supabase/README.md`](supabase/README.md)
 
 ### Tabelas (13, `public`)
 
