@@ -17,22 +17,29 @@ import time
 from pathlib import Path
 from typing import Any
 
+import threading
+import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import Body, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (Body, FastAPI, File, Form, HTTPException, Request,
+                     UploadFile, WebSocket, WebSocketDisconnect)
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                StreamingResponse)
 from fastapi.staticfiles import StaticFiles
 
-from . import stats
+from . import lote, rede, stats
 from .models import Estudo, ROI
 from .session import Sessao
 from .storage import Banco
 
 WEB = Path(__file__).parent / "web"
 BANCO = Banco(os.environ.get("CRONO_DB", "cronoanalise.db"))
+GRAVACOES = Path(os.environ.get("CRONO_GRAVACOES", "gravacoes"))
+# 2 GB: ~40 min de video do celular. Acima disso, gravar em partes.
+TAMANHO_MAX = int(os.environ.get("CRONO_UPLOAD_MAX_MB", "2048")) * 1024 * 1024
 
 SESSOES: dict[str, Sessao] = {}
+ANALISES: dict[str, dict[str, Any]] = {}   # gravacoes enviadas pelo celular
 
 
 @asynccontextmanager
@@ -310,3 +317,139 @@ def home() -> Any:
 def manifest() -> Any:
     return FileResponse(str(WEB / "manifest.webmanifest"),
                         media_type="application/manifest+json")
+
+
+# ------------------------------------------------------- modulo do celular
+@app.get("/celular", response_class=HTMLResponse)
+def pagina_celular() -> Any:
+    """Tela de campo: o analista com o celular na mao, dentro do galpao."""
+    pagina = WEB / "celular.html"
+    if not pagina.exists():
+        return JSONResponse({"erro": "Modulo do celular nao encontrado."}, status_code=500)
+    return FileResponse(str(pagina))
+
+
+@app.get("/api/celular/pareamento")
+def pareamento(request: Request) -> dict[str, Any]:
+    """Como abrir o app no celular: URLs da rede local, QR code e diagnostico.
+
+    O ponto critico e o `contexto_seguro`: sem HTTPS (ou localhost) o navegador
+    do celular nao entrega a camera, por mais que o app esteja no ar.
+    """
+    https = request.url.scheme == "https"
+    porta = request.url.port or (443 if https else 80)
+    urls = [u + "/celular" for u in rede.urls_de_acesso(porta, https)]
+    principal = urls[0] if urls else str(request.base_url)
+    return {
+        "urls": urls,
+        "principal": principal,
+        "qr_svg": rede.qr_svg(principal),
+        "https": https,
+        "contexto_seguro": https,
+        "aviso": None if https else (
+            "O servidor esta em HTTP. O navegador do celular so libera a camera em "
+            "HTTPS ou localhost. Suba com ./run.sh --https para gerar o certificado "
+            "local, ou use a camera do servidor / o modo gravacao."),
+    }
+
+
+def _rodar_analise(job: str, estudo: Estudo, caminho: Path, detector: str,
+                   marcacoes: list[dict[str, Any]] | None = None) -> None:
+    registro = ANALISES[job]
+    try:
+        def progresso(ts: float, ciclos: int) -> None:
+            registro["segundos"] = round(ts, 1)
+            registro["ciclos"] = ciclos
+
+        resumo = lote.resumo_de_arquivo(estudo, caminho, detector, progresso=progresso,
+                                        cancelado=lambda: registro.get("cancelar", False),
+                                        marcacoes=marcacoes)
+        registro["medicao_id"] = BANCO.salvar_medicao(estudo.id, resumo)
+        registro["resumo"] = resumo
+        registro["status"] = "concluida"
+    except Exception as exc:
+        registro["status"] = "erro"
+        registro["erro"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        registro["fim"] = time.time()
+
+
+@app.post("/api/estudos/{estudo_id}/gravacao")
+async def enviar_gravacao(estudo_id: str, arquivo: UploadFile = File(...),
+                          detector: str = "auto",
+                          marcacoes: str = Form("[]")) -> dict[str, Any]:
+    """Recebe o video gravado no celular e analisa em segundo plano.
+
+    E o modo mais preciso: o celular grava na taxa cheia da camera e o tempo
+    sai do proprio arquivo, sem depender da qualidade do Wi-Fi no momento.
+    """
+    estudo = BANCO.obter_estudo(estudo_id)
+    if estudo is None:
+        raise HTTPException(404, "Estudo nao encontrado.")
+    if not estudo.rois:
+        raise HTTPException(400, "Marque ao menos uma regiao (ROI) antes de enviar o video.")
+
+    GRAVACOES.mkdir(parents=True, exist_ok=True)
+    sufixo = Path(arquivo.filename or "video.webm").suffix or ".webm"
+    destino = GRAVACOES / f"{estudo_id}_{int(time.time())}{sufixo}"
+
+    tamanho = 0
+    try:
+        with destino.open("wb") as saida:
+            while pedaco := await arquivo.read(1024 * 1024):
+                tamanho += len(pedaco)
+                if tamanho > TAMANHO_MAX:
+                    raise HTTPException(
+                        413, f"Video maior que o limite de {TAMANHO_MAX // (1024*1024)} MB. "
+                             "Grave em partes menores.")
+                saida.write(pedaco)
+    except HTTPException:
+        destino.unlink(missing_ok=True)
+        raise
+    finally:
+        await arquivo.close()
+
+    if tamanho == 0:
+        destino.unlink(missing_ok=True)
+        raise HTTPException(400, "O arquivo chegou vazio.")
+
+    try:
+        toques = json.loads(marcacoes) if marcacoes else []
+        if not isinstance(toques, list):
+            toques = []
+    except json.JSONDecodeError:
+        toques = []
+
+    job = f"job_{uuid.uuid4().hex[:10]}"
+    ANALISES[job] = {"id": job, "estudo_id": estudo_id, "arquivo": str(destino),
+                     "bytes": tamanho, "status": "analisando", "segundos": 0.0,
+                     "ciclos": 0, "marcacoes": len(toques), "inicio": time.time()}
+    threading.Thread(target=_rodar_analise,
+                     args=(job, estudo, destino, detector, toques),
+                     daemon=True, name=f"analise-{job}").start()
+    return {"job": job, "status": "analisando", "bytes": tamanho,
+            "marcacoes": len(toques)}
+
+
+@app.get("/api/gravacoes/{job}")
+def status_gravacao(job: str) -> dict[str, Any]:
+    registro = ANALISES.get(job)
+    if registro is None:
+        raise HTTPException(404, "Analise nao encontrada.")
+    saida = {k: v for k, v in registro.items() if k != "resumo"}
+    if registro.get("resumo"):
+        saida["analise"] = registro["resumo"]["analise"]
+        saida["ciclos_detalhe"] = registro["resumo"]["ciclos"]
+        saida["estudo"] = registro["resumo"]["estudo"]
+    return saida
+
+
+@app.delete("/api/gravacoes/{job}")
+def cancelar_gravacao(job: str, apagar_video: bool = False) -> dict[str, str]:
+    registro = ANALISES.get(job)
+    if registro is None:
+        raise HTTPException(404, "Analise nao encontrada.")
+    registro["cancelar"] = True
+    if apagar_video:
+        Path(registro["arquivo"]).unlink(missing_ok=True)
+    return {"status": "cancelamento solicitado"}

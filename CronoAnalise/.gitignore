@@ -8,3 +8,6 @@ venv/
 *.pt
 saidas/
 .pytest_cache/
+certificados/
+gravacoes/
+*.webm

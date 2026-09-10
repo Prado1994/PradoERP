@@ -28,7 +28,11 @@
 <section class="tela ativa" id="tela-estudos">
   <h2>Estudos</h2>
   <p class="sub">Cada estudo é um posto de trabalho: produto, operador e as regiões que a câmera vai observar.</p>
-  <button class="terra bloco" onclick="App.novoEstudo()">+ Novo estudo</button>
+  <div class="linha-btn">
+    <button class="terra" onclick="App.novoEstudo()">+ Novo estudo</button>
+    <button class="claro" onclick="App.pareamento()">📱 Abrir no celular</button>
+  </div>
+  <div id="card-pareamento"></div>
   <div id="lista-estudos"></div>
 </section>
 
@@ -193,6 +197,7 @@
 
 <footer>Grupo Prado · Safety Prado · Country Prado · Itanhandu &amp; Guaxupé · 2026</footer>
 
+<script src="/static/comum.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

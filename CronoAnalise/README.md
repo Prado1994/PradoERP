@@ -30,15 +30,18 @@ e quantos ciclos ainda faltam medir para a amostra ser estatisticamente válida.
 
 ```bash
 cd CronoAnalise
-./run.sh              # cria o ambiente, instala tudo e sobe o servidor
+./run.sh --https      # cria o ambiente, gera o certificado e sobe o servidor
 ```
 
-O script mostra dois endereços:
+O script mostra os endereços:
 
 ```
-Neste computador : http://localhost:8000
-No celular       : http://192.168.0.x:8000   (mesma rede Wi-Fi)
+Neste computador : https://localhost:8443
+No celular       : https://192.168.0.x:8443/celular   (mesma rede Wi-Fi)
 ```
+
+Sem `--https` ele sobe em HTTP na porta 8000 — serve para a câmera do servidor
+e para o cronômetro, mas **não libera a câmera do celular** (ver abaixo).
 
 Instalação manual, se preferir:
 
@@ -48,19 +51,65 @@ python3 -m venv .venv
 ./.venv/bin/uvicorn cronoanalise.api:app --host 0.0.0.0 --port 8000
 ```
 
-### Acesso pelo celular (importante)
+---
 
-Navegador só libera a câmera em **HTTPS** ou em **localhost**. Três saídas:
+## Módulo Celular
 
-1. **Câmera do servidor** — a mais simples na fábrica: ligue uma webcam ou aponte
-   para a CFTV. O celular só assiste ao preview, não precisa de câmera.
-2. **HTTPS com certificado local** — gere um certificado e suba com
-   `uvicorn ... --ssl-keyfile chave.pem --ssl-certfile cert.pem`.
-3. **Túnel** (`cloudflared`, `ngrok`) — dá uma URL https na hora, útil para teste.
+A tela de campo fica em **`/celular`** — feita para ser usada em pé, no posto,
+com uma mão e possivelmente de luva: alvos grandes, contraste alto, tempo em
+letra garrafal e vibração a cada ciclo fechado.
+
+### Como o celular entra
+
+Na tela do PC, botão **📱 Abrir no celular**: aparece um **QR code** com o endereço
+do servidor na rede local. O analista aponta a câmera e está dentro — sem digitar IP.
+
+**Por que HTTPS.** Navegador nenhum entrega a câmera para uma página em HTTP que
+não seja `localhost` — é regra de segurança do navegador, não limitação do app.
+Por isso `./run.sh --https` gera um certificado local, válido para os IPs desta
+máquina (`cronoanalise/certificados.py`). Na primeira vez o celular avisa
+"conexão não privada": é o próprio servidor da fábrica — **Avançado → Prosseguir**,
+e o aviso não volta mais naquele aparelho.
+
+### Três modos de trabalho
+
+| Modo | Como funciona | Quando usar |
+|---|---|---|
+| **Ao vivo** | O celular envia ~8 quadros/s e o servidor mede na hora | Wi-Fi bom; você quer ver o resultado subindo na tela |
+| **Gravar e analisar** | O celular grava na taxa cheia da câmera e envia o arquivo no fim | **O mais preciso.** Wi-Fi ruim ou instável — a rede só é usada no envio |
+| **Só cronômetro** | Sem câmera, só os botões de elemento | Qualquer aparelho, funciona até em HTTP |
+
+O modo **Gravar** é o mais preciso porque o tempo sai do próprio arquivo — cada
+quadro carrega seu carimbo — em vez de depender de quando o pacote chegou pela
+rede. E ele lida com a **taxa de quadros variável** do celular (a câmera baixa o
+fps quando escurece), que faria a conta `índice ÷ fps` acumular erro ao longo do turno.
+
+### O que a tela de campo faz
+
+- **Marcar região com o dedo** — toque nos cantos, dê o nome e o papel. As ROIs
+  ficam salvas no estudo e valem também para a CFTV.
+- **Lanterna e zoom** — quando o aparelho permite. Galpão escuro e posto distante
+  são a regra, não a exceção.
+- **Tela não apaga** (Wake Lock) durante a medição.
+- **Reconexão automática** — Wi-Fi de galpão cai. O app reconecta sozinho com
+  espera crescente, e a medição continua rodando no servidor enquanto isso.
+- **Fila de marcações** — se a rede falhar bem na hora do toque, a marcação fica
+  na fila e sobe quando a conexão volta. Nenhum toque se perde.
+- **Marcar enquanto grava** — no modo Gravar, os toques são cronometrados no
+  aparelho e enviados junto com o vídeo. O servidor os encaixa no ponto exato:
+  o analista marca o que a câmera não vê, a câmera mede o que o dedo não alcança.
+- **Reenvio manual** — se o envio falhar, o vídeo continua no aparelho e há um
+  botão para tentar de novo.
+
+### Alternativa sem celular
+
+Se preferir não mexer com certificado: ligue uma **webcam no servidor** ou aponte
+para a **CFTV**. O celular vira só um monitor — abre o preview anotado e não
+precisa de câmera nem de HTTPS.
 
 ---
 
-## Como usar em 5 passos
+## Como usar em 5 passos (tela do PC)
 
 1. **Novo estudo** — nome, unidade, setor, produto, posto, operador.
    Ajuste o **fator de ritmo (FR)** e o **fator de tolerância (FT)**.
@@ -78,9 +127,9 @@ Navegador só libera a câmera em **HTTPS** ou em **localhost**. Três saídas:
 
 ### Cronômetro manual
 
-Sempre disponível, com ou sem câmera. Toque no elemento que está começando; ao
-final do ciclo, toque em **Fim de ciclo**. Serve para a cronoanálise clássica na
-mão e para o analista validar o que a câmera está vendo.
+Sempre disponível, com ou sem câmera, nas duas telas. Toque no elemento que está
+começando; ao final do ciclo, toque em **Fim de ciclo**. Serve para a cronoanálise
+clássica na mão e para o analista validar o que a câmera está vendo.
 
 ---
 
@@ -221,14 +270,20 @@ CronoAnalise/
 │   ├── session.py              orquestra captura em thread
 │   ├── storage.py              SQLite (estudos e medições)
 │   ├── api.py                  REST + WebSocket + preview MJPEG
+│   ├── lote.py                 análise de vídeo gravado (CLI e módulo celular)
+│   ├── rede.py                 IPs locais e QR de pareamento
+│   ├── certificados.py         certificado HTTPS local — libera a câmera
 │   ├── cli.py                  análise em lote pelo terminal
 │   ├── detectors/
 │   │   ├── motion_roi.py       movimento/presença — o padrão
 │   │   ├── yolo_zone.py        objeto + zona (opcional)
 │   │   └── pose_motion.py      movimento do operador (opcional)
-│   └── web/                    PWA mobile — identidade visual Grupo Prado
+│   └── web/
+│       ├── index.html/app.js   tela de escritório
+│       ├── celular.html/.js    Módulo Celular — tela de campo
+│       └── comum.js            o que as duas telas compartilham
 ├── demo/                       vídeo sintético + estudo de exemplo
-└── tests/                      20 testes (unitários, integração e API)
+└── tests/                      29 testes (unitários, integração, API e celular)
 ```
 
 ## API
@@ -245,8 +300,12 @@ CronoAnalise/
 | `GET` | `/api/estudos/{id}/resumo` | análise ao vivo |
 | `GET` | `/api/estudos/{id}/preview.mjpg` | preview anotado da câmera |
 | `GET` | `/api/medicoes/{id}/export.csv` | CSV (separador `;`, abre direto no Excel) |
-| `WS` | `/ws/estudos/{id}/frames` | frames do celular |
+| `WS` | `/ws/estudos/{id}/frames` | frames do celular (modo ao vivo) |
 | `WS` | `/ws/estudos/{id}/eventos` | eventos ao vivo |
+| `GET` | `/celular` | tela de campo do Módulo Celular |
+| `GET` | `/api/celular/pareamento` | URLs da rede, QR code e diagnóstico de HTTPS |
+| `POST` | `/api/estudos/{id}/gravacao` | recebe o vídeo gravado no celular |
+| `GET` | `/api/gravacoes/{job}` | andamento da análise da gravação |
 
 Documentação interativa em `/docs`.
 
@@ -257,15 +316,17 @@ Documentação interativa em `/docs`.
 ```
 
 Cobrem o motor de ciclos (histerese, debounce, âncora, contador, cronômetro manual),
-as contas de cronoanálise, a API inteira e uma medição ponta a ponta sobre vídeo,
-conferindo o valor real conhecido.
+as contas de cronoanálise, a API inteira, o Módulo Celular (pareamento, certificado,
+upload de WebM e mescla das marcações com a visão) e uma medição ponta a ponta sobre
+vídeo, conferindo o valor real conhecido.
 
 ---
 
 ## Próximos passos sugeridos
 
-1. **Piloto** em um posto de pesponto em Itanhandu, com câmera de teto, comparando
-   com uma cronoanálise manual do mesmo turno.
+1. **Piloto** em um posto de pesponto em Itanhandu: comece pelo Módulo Celular no
+   modo **Gravar e analisar** — não depende de infra nenhuma — e compare com uma
+   cronoanálise manual do mesmo turno.
 2. **Integração** do CSV com o Power BI via Kondado, junto dos dados do Bling.
 3. **Tempo padrão no Odoo** — alimentar as rotinas de produção com o TP medido,
    fechando o OKR3 (margem bruta > 40%).

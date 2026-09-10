@@ -1,0 +1,126 @@
+/* Módulo Celular — tela de campo. Pensada para ser usada em pé, no galpão,
+   com uma mão, possivelmente de luva. Alvos grandes, contraste alto. */
+
+body.campo {
+  background: var(--navy);
+  color: var(--warm);
+  padding-bottom: 0;
+  overscroll-behavior: none;
+}
+
+.campo-topo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.campo-topo .logo { width: 32px; height: 32px; font-size: 17px; }
+.campo-topo select {
+  flex: 1; min-width: 0; background: var(--blue); color: var(--warm);
+  border: 1px solid rgba(255,255,255,.15); font-size: 14px; padding: 8px 10px;
+}
+.sinal { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 100px;
+         background: #3a2a24; color: var(--beige); white-space: nowrap; }
+.sinal.ok { background: #1E4A34; color: #8FE0B0; }
+.sinal.ruim { background: #4A231A; color: #FFB3A0; }
+
+.campo-palco {
+  position: relative; width: 100%; background: #000;
+  aspect-ratio: 3 / 4; max-height: 52vh;
+}
+.campo-palco video, .campo-palco canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+}
+.campo-palco canvas { touch-action: none; }
+.campo-palco .placa {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--beige); font-size: 14px; text-align: center; padding: 24px;
+}
+
+.painel {
+  position: absolute; left: 8px; top: 8px; right: 8px;
+  display: flex; gap: 8px; align-items: flex-start; pointer-events: none;
+}
+.painel .bloco {
+  background: rgba(28,38,50,.86); border-radius: 8px; padding: 6px 10px;
+}
+.painel .tempo { font-size: 26px; font-weight: 600; color: var(--yellow);
+                 font-variant-numeric: tabular-nums; line-height: 1.1; }
+.painel .rot { font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+               color: var(--beige); }
+.painel .nums { margin-left: auto; text-align: right; }
+.painel .nums b { font-size: 22px; color: var(--warm); font-weight: 600; }
+
+.gravando {
+  position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center;
+  gap: 6px; background: rgba(180,71,43,.92); color: #fff; padding: 5px 11px;
+  border-radius: 100px; font-size: 12px; font-weight: 600;
+}
+.gravando i { width: 9px; height: 9px; border-radius: 50%; background: #fff;
+              animation: pisca 1s infinite; }
+@keyframes pisca { 50% { opacity: .25; } }
+
+.ferramentas { display: flex; gap: 6px; padding: 8px 12px; flex-wrap: wrap; }
+.ferramentas button {
+  flex: 1 1 auto; background: var(--blue); color: var(--warm); font-size: 12px;
+  padding: 9px 8px; border: 1px solid rgba(255,255,255,.12);
+}
+.ferramentas button.ligado { background: var(--yellow); color: var(--navy); border-color: var(--yellow); }
+.ferramentas input[type=range] { flex: 2 1 120px; padding: 0; accent-color: var(--yellow); }
+
+.abas { display: flex; gap: 6px; padding: 0 12px 8px; }
+.abas button {
+  flex: 1; background: var(--blue); color: var(--beige); font-size: 13px; padding: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.abas button.ativo { background: var(--warm); color: var(--navy); border-color: var(--warm); }
+
+.acao { padding: 0 12px 10px; }
+.acao button {
+  width: 100%; font-size: 18px; padding: 18px; letter-spacing: .4px;
+}
+.acao button.iniciar { background: var(--yellow); color: var(--navy); }
+.acao button.parar { background: var(--alerta); color: #fff; }
+
+.elementos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 12px; }
+.elementos button {
+  padding: 20px 10px; font-size: 15px; background: var(--blue); color: var(--warm);
+  border: 1px solid rgba(255,255,255,.14); min-height: 66px;
+}
+.elementos button.ligado { background: var(--terra); border-color: var(--terra); color: #fff; }
+.ciclo-btn { padding: 0 12px 12px; margin-top: 8px; }
+.ciclo-btn button { width: 100%; padding: 20px; font-size: 17px;
+                    background: var(--terra); color: #fff; }
+
+.campo-log {
+  margin: 0 12px 12px; background: rgba(0,0,0,.28); border-radius: 8px; padding: 8px 10px;
+  font-size: 12px; font-family: ui-monospace, monospace; color: var(--beige);
+  max-height: 130px; overflow-y: auto;
+}
+.campo-log .ciclo { color: var(--yellow); font-weight: 600; }
+.campo-log .peca { color: #7FD1A0; }
+
+.campo-aviso {
+  margin: 10px 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+  background: #4A3A1A; border: 1px solid var(--yellow); color: var(--warm);
+}
+.campo-aviso.erro { background: #4A231A; border-color: var(--alerta); }
+.campo-aviso a { color: var(--yellow); }
+
+.progresso { height: 8px; background: rgba(255,255,255,.14); border-radius: 4px;
+             overflow: hidden; margin-top: 8px; }
+.progresso > i { display: block; height: 100%; background: var(--yellow); transition: width .2s; }
+
+.campo-resultado { margin: 0 12px 16px; }
+.campo-resultado .kpi { background: var(--blue); border-color: rgba(255,255,255,.1);
+                        border-top-color: var(--yellow); }
+.campo-resultado .kpi .rot { color: var(--beige); }
+.campo-resultado .kpi .val { color: var(--warm); }
+.campo-resultado .kpi .uni { color: var(--beige); opacity: .75; }
+
+/* Pareamento (mostrado na tela do PC) */
+.pareamento { text-align: center; }
+.pareamento .qr { background: #fff; padding: 12px; border-radius: var(--radius);
+                  display: inline-block; margin: 10px 0; }
+.pareamento .qr svg { display: block; }
+.pareamento code { display: block; font-size: 15px; word-break: break-all;
+                   background: var(--navy); color: var(--yellow); padding: 10px;
+                   border-radius: var(--radius-sm); margin-top: 8px; }

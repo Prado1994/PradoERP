@@ -17,10 +17,8 @@ import sys
 from pathlib import Path
 
 from . import stats
-from .cycle_engine import MotorCiclos
-from .detectors import criar_detector
+from .lote import analisar_video
 from .models import Estudo
-from .sources import criar_fonte
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,50 +35,34 @@ def main(argv: list[str] | None = None) -> int:
 
     dados = json.loads(Path(args.config).read_text(encoding="utf-8"))
     estudo = Estudo.from_dict(dados)
-    if not estudo.rois:
-        print("ERRO: o estudo nao tem nenhuma ROI definida.", file=sys.stderr)
-        return 2
 
-    fonte = criar_fonte(args.fonte)
-    detector = criar_detector(estudo.rois, args.detector)
-    motor = MotorCiclos(estudo.rois)
+    def mostrar(ts: float, ciclos: int) -> None:
+        if not args.silencioso:
+            print(f"\r  {ts:7.1f}s  ciclos={ciclos}", end="", flush=True)
 
-    fonte.abrir()
-    n = 0
     try:
-        while True:
-            frame = fonte.ler()
-            if frame is None:
-                break
-            if frame.imagem is None:
-                continue
-            resultado = detector.processar(frame.imagem, frame.ts)
-            motor.processar(resultado.atividade, frame.ts)
-            n += 1
-            if not args.silencioso and n % 60 == 0:
-                print(f"\r  {frame.ts:7.1f}s  frames={n}  "
-                      f"ciclos={len(motor.ciclos)}", end="", flush=True)
+        ciclos, analise, _ = analisar_video(estudo, args.fonte, args.detector,
+                                            progresso=mostrar)
     except KeyboardInterrupt:
-        pass
-    finally:
-        fonte.fechar()
-        motor.finalizar()
+        print("\n  interrompido pelo usuario", file=sys.stderr)
+        return 130
+    except ValueError as exc:
+        print(f"ERRO: {exc}", file=sys.stderr)
+        return 2
 
     if not args.silencioso:
         print()
 
-    analise = stats.analisar(motor.ciclos, estudo.parametros, motor.duracao_captura)
-
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8-sig") as fh:
-            csv.writer(fh, delimiter=";").writerows(stats.linhas_csv(motor.ciclos))
+            csv.writer(fh, delimiter=";").writerows(stats.linhas_csv(ciclos))
         if not args.silencioso:
             print(f"  CSV gravado em {args.csv}")
 
     if args.json_out:
         Path(args.json_out).write_text(
             json.dumps({"estudo": estudo.to_dict(), "analise": analise,
-                        "ciclos": [c.to_dict() for c in motor.ciclos]},
+                        "ciclos": [c.to_dict() for c in ciclos]},
                        ensure_ascii=False, indent=2), encoding="utf-8")
         if not args.silencioso:
             print(f"  JSON gravado em {args.json_out}")

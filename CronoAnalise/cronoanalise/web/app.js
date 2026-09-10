@@ -3,16 +3,8 @@
    ou apenas exibindo o preview de uma câmera de CFTV ligada no servidor. */
 
 const App = (() => {
-  const $ = (id) => document.getElementById(id);
-  const fmt = (v, d = 2) => (v ?? 0).toLocaleString('pt-BR',
-    { minimumFractionDigits: d, maximumFractionDigits: d });
-  const fmt0 = (v) => Math.round(v ?? 0).toLocaleString('pt-BR');
-  const seg = (s) => {
-    s = s || 0;
-    if (s < 60) return fmt(s, 2) + 's';
-    const m = Math.floor(s / 60);
-    return `${m}min ${fmt(s - m * 60, 0)}s`;
-  };
+  const { $, fmt, fmt0, seg, api, areaImagem: areaDe, desenharPoligonos,
+    pontoNormalizado } = Crono;
 
   const estado = {
     estudos: [], estudo: null, rois: [], pontos: [],
@@ -20,19 +12,6 @@ const App = (() => {
     wsFrames: null, wsEventos: null, envio: null, poll: null,
     capturando: false, ultimo: null,
   };
-
-  // ------------------------------------------------------------- API
-  async function api(rota, opcoes = {}) {
-    const r = await fetch(rota, {
-      headers: { 'Content-Type': 'application/json' }, ...opcoes,
-    });
-    if (!r.ok) {
-      let msg = r.statusText;
-      try { msg = (await r.json()).detail || msg; } catch (e) { /* corpo vazio */ }
-      throw new Error(msg);
-    }
-    return r.status === 204 ? null : r.json();
-  }
 
   function aviso(texto, erro = false) {
     $('captura-aviso').innerHTML = texto
@@ -68,6 +47,32 @@ const App = (() => {
         <button class="claro" onclick="App.editar('${e.id}')">Editar</button>
         <button class="terra" onclick="App.abrir('${e.id}')">Abrir</button>
       </div>`).join('');
+  }
+
+  /* Mostra como entrar pelo celular: QR code + endereço na rede local. */
+  async function pareamento() {
+    const alvo = $('card-pareamento');
+    if (alvo.innerHTML) { alvo.innerHTML = ''; return; }
+    alvo.innerHTML = '<div class="card">Consultando a rede…</div>';
+    try {
+      const p = await api('/api/celular/pareamento');
+      alvo.innerHTML = `
+        <div class="card ${p.contexto_seguro ? 'amarelo' : ''} pareamento">
+          <span class="badge ${p.contexto_seguro ? 'tatico' : 'operacional'}">
+            ${p.contexto_seguro ? 'Pronto para a câmera' : 'Só cronômetro'}</span>
+          <p class="sub" style="margin:10px 0 0">
+            Aponte a câmera do celular para o código, ou digite o endereço.
+            O celular precisa estar na mesma rede Wi-Fi.</p>
+          ${p.qr_svg ? `<div class="qr">${p.qr_svg}</div>`
+            : '<p class="sub">(instale o pacote <code>qrcode</code> para ver o QR)</p>'}
+          <code>${p.principal}</code>
+          ${p.urls.length > 1 ? `<p class="sub" style="margin-top:8px">
+            Outros endereços desta máquina: ${p.urls.slice(1).join(' · ')}</p>` : ''}
+          ${p.aviso ? `<div class="aviso" style="margin-top:12px">${p.aviso}</div>` : ''}
+        </div>`;
+    } catch (e) {
+      alvo.innerHTML = `<div class="aviso erro">Não consegui montar o pareamento: ${e.message}</div>`;
+    }
   }
 
   function novoEstudo() {
@@ -210,78 +215,22 @@ const App = (() => {
     desenharROIs();
   }
 
-  /* Área realmente ocupada pela imagem dentro do palco (object-fit: contain). */
-  function areaImagem() {
-    const c = $('desenho');
+  function midiaAtual() {
     const v = $('video');
-    const img = $('preview');
-    let ar = 4 / 3;
-    if (!v.hidden && v.videoWidth) ar = v.videoWidth / v.videoHeight;
-    else if (!img.hidden && img.naturalWidth) ar = img.naturalWidth / img.naturalHeight;
-    const arCaixa = c.width / c.height;
-    if (ar > arCaixa) {
-      const h = c.width / ar;
-      return { x: 0, y: (c.height - h) / 2, w: c.width, h };
-    }
-    const w = c.height * ar;
-    return { x: (c.width - w) / 2, y: 0, w, h: c.height };
+    return !v.hidden ? v : $('preview');
   }
-
-  const CORES = { elemento: '#FEC761', ancora: '#CCC1A9', contador: '#9F5234' };
 
   function desenharROIs() {
     const c = $('desenho');
-    const ctx = c.getContext('2d');
-    const a = areaImagem();
-    ctx.clearRect(0, 0, c.width, c.height);
-    const px = (p) => [a.x + p[0] * a.w, a.y + p[1] * a.h];
-
-    estado.rois.forEach((roi) => {
-      if (roi.pontos.length < 3) return;
-      ctx.beginPath();
-      roi.pontos.forEach((p, i) => {
-        const [x, y] = px(p);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-      ctx.closePath();
-      ctx.strokeStyle = CORES[roi.modo] || '#FEC761';
-      ctx.lineWidth = roi.ativo ? 4 : 2;
-      ctx.fillStyle = (CORES[roi.modo] || '#FEC761') + (roi.ativo ? '55' : '22');
-      ctx.fill(); ctx.stroke();
-      const [x, y] = px(roi.pontos[0]);
-      ctx.fillStyle = '#1C2632';
-      ctx.fillRect(x, y - 18, ctx.measureText(roi.nome).width + 16, 18);
-      ctx.fillStyle = '#FFFCF4';
-      ctx.font = '12px DM Sans, sans-serif';
-      ctx.fillText(roi.nome, x + 6, y - 5);
-    });
-
-    if (estado.pontos.length) {
-      ctx.beginPath();
-      estado.pontos.forEach((p, i) => {
-        const [x, y] = px(p);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-      ctx.strokeStyle = '#9F5234'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
-      ctx.stroke(); ctx.setLineDash([]);
-      estado.pontos.forEach((p) => {
-        const [x, y] = px(p);
-        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#9F5234'; ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-      });
-    }
+    desenharPoligonos(c.getContext('2d'), areaDe(c, midiaAtual()),
+      estado.rois, estado.pontos);
   }
 
   function aoTocar(ev) {
     ev.preventDefault();
-    const c = $('desenho');
-    const r = c.getBoundingClientRect();
-    const a = areaImagem();
-    const x = (ev.clientX - r.left - a.x) / a.w;
-    const y = (ev.clientY - r.top - a.y) / a.h;
-    if (x < 0 || x > 1 || y < 0 || y > 1) return;
-    estado.pontos.push([+x.toFixed(4), +y.toFixed(4)]);
+    const ponto = pontoNormalizado(ev, $('desenho'), midiaAtual());
+    if (!ponto) return;
+    estado.pontos.push(ponto);
     desenharROIs();
   }
 
@@ -615,7 +564,7 @@ const App = (() => {
     carregarEstudos();
   });
 
-  return { irPara, novoEstudo, editar, salvarEstudo, abrir, mudouFonte, abrirCamera,
+  return { irPara, pareamento, novoEstudo, editar, salvarEstudo, abrir, mudouFonte, abrirCamera,
     trocarCamera, salvarROI, desfazerPonto, removerROI, iniciar, parar, marcar,
     redefinirFundo, mostrarMedicao };
 })();
