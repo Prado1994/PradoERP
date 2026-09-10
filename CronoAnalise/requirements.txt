@@ -1,0 +1,6 @@
+# Núcleo — roda em qualquer PC, sem GPU
+fastapi>=0.110
+uvicorn[standard]>=0.27
+opencv-python-headless>=4.9
+numpy>=1.26
+python-multipart>=0.0.9

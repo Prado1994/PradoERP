@@ -1,0 +1,179 @@
+/* Cronoanalise Prado - identidade visual Grupo Prado */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --navy: #1C2632;
+  --blue: #2C3B4E;
+  --terra: #9F5234;
+  --yellow: #FEC761;
+  --beige: #CCC1A9;
+  --warm: #FFFCF4;
+  --bg: #F5F3EE;
+  --card: #ffffff;
+  --border: rgba(0,0,0,0.09);
+  --border-strong: rgba(0,0,0,0.15);
+  --text: #1a1a18;
+  --text-muted: #5c5b57;
+  --text-faint: #9a9890;
+  --radius: 12px;
+  --radius-sm: 7px;
+  --ok: #2E7D52;
+  --alerta: #B4472B;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5;
+  padding-bottom: 84px;
+}
+
+/* ------------------------------------------------------------ header */
+header.topo {
+  background: var(--navy); color: var(--warm);
+  padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 40;
+}
+.logo {
+  width: 40px; height: 40px; border-radius: 8px; background: var(--terra);
+  display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 20px;
+  flex-shrink: 0;
+}
+.topo .marca { font-size: 17px; font-weight: 600; line-height: 1.1; }
+.topo .tagline { color: var(--beige); font-size: 12px; font-style: italic; }
+.topo .doc { margin-left: auto; text-align: right; }
+.topo .doc b { color: var(--yellow); font-size: 14px; font-weight: 600; display: block; }
+.topo .doc span { color: var(--beige); font-size: 12px; }
+
+/* -------------------------------------------------------------- base */
+main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+.tela { display: none; }
+.tela.ativa { display: block; }
+h2 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+h3 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; text-transform: uppercase;
+     letter-spacing: 0.6px; color: var(--text-muted); }
+p.sub { color: var(--text-muted); font-size: 13px; margin: 0 0 16px; }
+
+.card {
+  background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius);
+  border-top: 3px solid var(--terra); padding: 14px; margin-bottom: 12px;
+}
+.card.amarelo { border-top-color: var(--yellow); }
+.card.navy { border-top-color: var(--navy); }
+
+.badge {
+  font-size: 10px; font-weight: 600; padding: 4px 12px; border-radius: 100px;
+  letter-spacing: 1px; text-transform: uppercase; display: inline-block;
+}
+.badge.estrategico { background: var(--navy); color: var(--yellow); }
+.badge.tatico { background: var(--blue); color: var(--beige); }
+.badge.operacional { background: var(--terra); color: #fff; }
+.chip { background: #EEF4FF; color: #2A62B0; padding: 2px 8px; border-radius: 4px;
+        font-size: 10px; font-weight: 500; }
+
+/* ----------------------------------------------------------- botoes */
+button, .btn {
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: none; border-radius: var(--radius-sm); padding: 11px 16px;
+  background: var(--navy); color: var(--warm); transition: filter .15s;
+}
+button:active { filter: brightness(1.25); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.terra { background: var(--terra); color: #fff; }
+button.amarelo { background: var(--yellow); color: var(--navy); }
+button.claro { background: transparent; color: var(--navy); border: 1px solid var(--border-strong); }
+button.perigo { background: var(--alerta); color: #fff; }
+button.bloco { width: 100%; }
+.linha-btn { display: flex; gap: 8px; flex-wrap: wrap; }
+.linha-btn > button { flex: 1 1 auto; }
+
+/* --------------------------------------------------------- formulario */
+label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted);
+        margin-bottom: 4px; }
+input, select, textarea {
+  font-family: inherit; font-size: 15px; width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: #fff; color: var(--text);
+}
+input:focus, select:focus { outline: 2px solid var(--yellow); outline-offset: -1px; }
+.campo { margin-bottom: 12px; }
+.grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+
+/* ----------------------------------------------------------- camera */
+.palco {
+  position: relative; background: var(--navy); border-radius: var(--radius);
+  overflow: hidden; aspect-ratio: 4 / 3; max-height: 60vh; margin-bottom: 12px;
+}
+.palco video, .palco img, .palco canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+}
+.palco canvas.desenho { touch-action: none; }
+.palco .vazio { position: absolute; inset: 0; display: grid; place-items: center;
+                color: var(--beige); font-size: 13px; text-align: center; padding: 20px; }
+.hud {
+  position: absolute; left: 8px; top: 8px; background: rgba(28,38,50,.82);
+  color: var(--warm); border-radius: var(--radius-sm); padding: 6px 10px;
+  font-size: 12px; line-height: 1.5;
+}
+.hud b { color: var(--yellow); }
+
+/* ----------------------------------------------------------- listas */
+.item {
+  background: var(--card); border: 0.5px solid var(--border); border-left: 3px solid var(--terra);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.item .info { flex: 1; min-width: 0; }
+.item .nome { font-weight: 600; font-size: 14px; }
+.item .meta { font-size: 12px; color: var(--text-muted); }
+.item button { padding: 7px 11px; font-size: 12px; }
+.item.ativo { border-left-color: var(--yellow); background: #FFFBF0; }
+
+.log { background: var(--navy); color: var(--beige); border-radius: var(--radius-sm);
+       padding: 10px; font-size: 12px; font-family: ui-monospace, monospace;
+       max-height: 190px; overflow-y: auto; }
+.log div { padding: 1px 0; }
+.log .ciclo { color: var(--yellow); font-weight: 600; }
+.log .peca { color: #7FD1A0; }
+
+/* ------------------------------------------------------------- kpis */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.kpi { background: var(--card); border: 0.5px solid var(--border); border-top: 3px solid var(--terra);
+       border-radius: var(--radius); padding: 12px; }
+.kpi .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+            color: var(--text-muted); font-weight: 500; }
+.kpi .val { font-size: 24px; font-weight: 600; line-height: 1.2; margin-top: 2px; }
+.kpi .uni { font-size: 12px; color: var(--text-faint); }
+.kpi.destaque { border-top-color: var(--yellow); background: var(--warm); }
+.kpi .val.bom { color: var(--ok); }
+.kpi .val.ruim { color: var(--alerta); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card);
+        border-radius: var(--radius); overflow: hidden; }
+th { background: var(--blue); color: var(--beige); font-size: 11px; text-transform: uppercase;
+     letter-spacing: .6px; padding: 8px; text-align: left; font-weight: 600; }
+td { padding: 8px; border-top: 1px solid var(--border); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.invalido td { color: var(--text-faint); text-decoration: line-through; }
+.rolagem { overflow-x: auto; }
+
+.barra { height: 8px; background: #EDE9E0; border-radius: 4px; overflow: hidden; }
+.barra > i { display: block; height: 100%; background: var(--terra); }
+
+/* --------------------------------------------------------- navegacao */
+nav.rodape {
+  position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy);
+  display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom);
+}
+nav.rodape button {
+  flex: 1; background: none; border-radius: 0; color: var(--beige); font-size: 11px;
+  font-weight: 500; padding: 10px 4px; text-transform: uppercase; letter-spacing: .5px;
+}
+nav.rodape button.ativo { color: var(--yellow); box-shadow: inset 0 3px 0 var(--yellow); }
+
+footer { text-align: center; font-size: 11px; color: var(--text-faint); padding: 20px 12px; }
+.aviso { background: #FFF4E0; border: 1px solid var(--yellow); border-radius: var(--radius-sm);
+         padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
+.aviso.erro { background: #FCEBE6; border-color: var(--alerta); }
+.vazio-lista { text-align: center; color: var(--text-faint); font-size: 13px; padding: 28px 12px; }

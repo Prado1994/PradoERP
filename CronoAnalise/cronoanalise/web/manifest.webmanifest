@@ -1,0 +1,19 @@
+{
+  "name": "Cronoanálise Prado",
+  "short_name": "Cronoanálise",
+  "description": "Estudo de tempos por visão computacional — Grupo Prado",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F3EE",
+  "theme_color": "#1C2632",
+  "lang": "pt-BR",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%239F5234'/%3E%3Ctext x='256' y='352' font-family='sans-serif' font-size='300' font-weight='600' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

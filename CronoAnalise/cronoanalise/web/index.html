@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1C2632">
+<title>Cronoanálise Prado</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="logo">P</div>
+  <div>
+    <div class="marca">Grupo Prado</div>
+    <div class="tagline">Feitos para durar</div>
+  </div>
+  <div class="doc">
+    <b>Cronoanálise</b>
+    <span id="topo-estudo">Estudo de tempos</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================ ESTUDOS ============= -->
+<section class="tela ativa" id="tela-estudos">
+  <h2>Estudos</h2>
+  <p class="sub">Cada estudo é um posto de trabalho: produto, operador e as regiões que a câmera vai observar.</p>
+  <button class="terra bloco" onclick="App.novoEstudo()">+ Novo estudo</button>
+  <div id="lista-estudos"></div>
+</section>
+
+<!-- ============================================ CONFIG ============== -->
+<section class="tela" id="tela-config">
+  <h2 id="config-titulo">Novo estudo</h2>
+  <p class="sub">Identificação do posto e parâmetros de cálculo.</p>
+
+  <div class="card">
+    <span class="badge operacional">Identificação</span>
+    <div class="grade" style="margin-top:12px">
+      <div class="campo"><label>Nome do estudo</label><input id="f-nome" placeholder="Pesponto — bota Safety 4020"></div>
+      <div class="campo"><label>Unidade</label>
+        <select id="f-unidade"><option>Itanhandu</option><option>Guaxupé</option></select></div>
+      <div class="campo"><label>Setor</label>
+        <select id="f-setor">
+          <option>Corte</option><option>Pesponto</option><option>Montagem</option>
+          <option>Injeção</option><option>Acabamento</option><option>Expedição</option>
+        </select></div>
+      <div class="campo"><label>Produto / referência</label><input id="f-produto" placeholder="Safety Prado 4020 bico composto"></div>
+      <div class="campo"><label>Posto</label><input id="f-posto" placeholder="Máquina 7 — coluna"></div>
+      <div class="campo"><label>Operador</label><input id="f-operador" placeholder="Iniciais ou matrícula"></div>
+      <div class="campo"><label>Analista</label><input id="f-analista" placeholder="Quem está cronometrando"></div>
+    </div>
+  </div>
+
+  <div class="card amarelo">
+    <span class="badge tatico">Parâmetros de cálculo</span>
+    <div class="grade" style="margin-top:12px">
+      <div class="campo"><label>Fator de ritmo (FR)</label>
+        <input id="f-fr" type="number" step="0.05" min="0.5" max="1.5" value="1.00">
+        <small style="color:var(--text-faint);font-size:11px">1,00 = ritmo normal · 1,15 = acima do normal</small></div>
+      <div class="campo"><label>Fator de tolerância (FT)</label>
+        <input id="f-ft" type="number" step="0.01" min="0" max="0.5" value="0.15">
+        <small style="color:var(--text-faint);font-size:11px">0,15 = 15% (pessoais + fadiga + esperas)</small></div>
+      <div class="campo"><label>Jornada produtiva (min/dia)</label><input id="f-jornada" type="number" value="528"></div>
+      <div class="campo"><label>Meta (pares/dia)</label><input id="f-meta" type="number" value="550"></div>
+      <div class="campo"><label>Demanda p/ takt (pares/dia)</label><input id="f-demanda" type="number" value="550"></div>
+      <div class="campo"><label>Peças por ciclo</label><input id="f-pecas" type="number" step="0.5" value="1"></div>
+      <div class="campo"><label>Postos na linha</label><input id="f-postos" type="number" value="1"></div>
+      <div class="campo"><label>Erro admissível</label>
+        <select id="f-erro"><option value="0.05">5% (padrão)</option><option value="0.1">10%</option>
+        <option value="0.02">2% (rigoroso)</option></select></div>
+    </div>
+  </div>
+
+  <div class="linha-btn">
+    <button class="claro" onclick="App.irPara('estudos')">Voltar</button>
+    <button class="terra" onclick="App.salvarEstudo()">Salvar estudo</button>
+  </div>
+</section>
+
+<!-- ============================================ CAPTURA ============= -->
+<section class="tela" id="tela-captura">
+  <h2 id="captura-titulo">Captura</h2>
+  <p class="sub" id="captura-sub">Escolha a câmera, marque as regiões e inicie.</p>
+  <div id="captura-aviso"></div>
+
+  <div class="card">
+    <span class="badge operacional">1 · Câmera</span>
+    <div class="campo" style="margin-top:12px">
+      <label>Fonte de vídeo</label>
+      <select id="f-fonte" onchange="App.mudouFonte()">
+        <option value="navegador">Câmera deste celular / notebook</option>
+        <option value="rtsp">Câmera de CFTV (RTSP / IP)</option>
+        <option value="webcam">Webcam ligada no servidor</option>
+        <option value="arquivo">Vídeo já gravado (arquivo no servidor)</option>
+      </select>
+    </div>
+    <div class="campo" id="campo-endereco" hidden>
+      <label id="rot-endereco">Endereço</label>
+      <input id="f-endereco" placeholder="rtsp://usuario:senha@192.168.0.50:554/stream1">
+    </div>
+    <div class="campo">
+      <label>Motor de detecção</label>
+      <select id="f-detector">
+        <option value="auto">Movimento / presença (OpenCV — recomendado)</option>
+        <option value="yolo">Objetos + zona (YOLO — opcional)</option>
+        <option value="pose">Movimento do operador (pose — opcional)</option>
+      </select>
+    </div>
+    <div class="linha-btn">
+      <button class="claro" id="btn-camera" onclick="App.abrirCamera()">Ligar câmera</button>
+      <button class="claro" id="btn-trocar" onclick="App.trocarCamera()" hidden>Trocar câmera</button>
+    </div>
+  </div>
+
+  <div class="palco" id="palco">
+    <video id="video" playsinline muted autoplay></video>
+    <img id="preview" hidden alt="Preview da câmera">
+    <canvas id="desenho" class="desenho"></canvas>
+    <div class="vazio" id="palco-vazio">Ligue a câmera para começar</div>
+    <div class="hud" id="hud" hidden></div>
+  </div>
+
+  <div class="card">
+    <span class="badge operacional">2 · Regiões observadas (ROI)</span>
+    <p class="sub" style="margin:8px 0">
+      Toque na imagem para marcar os cantos de uma região e finalize. Use uma região por
+      elemento do trabalho, e uma região <b>contador</b> na saída da peça.
+    </p>
+    <div class="grade">
+      <div class="campo"><label>Nome da região</label><input id="f-roi-nome" placeholder="Ex.: pespontar cabedal"></div>
+      <div class="campo"><label>Papel</label>
+        <select id="f-roi-modo">
+          <option value="elemento">Elemento (mede duração)</option>
+          <option value="ancora">Âncora (marca início do ciclo)</option>
+          <option value="contador">Contador (cada ativação = 1 peça)</option>
+        </select></div>
+      <div class="campo"><label>O que observar</label>
+        <select id="f-roi-deteccao">
+          <option value="movimento">Movimento (trabalho acontecendo)</option>
+          <option value="presenca">Presença (peça parada ali)</option>
+          <option value="objeto">Objeto detectado (YOLO)</option>
+        </select></div>
+      <div class="campo"><label>Sensibilidade</label>
+        <select id="f-roi-sens">
+          <option value="0.10">Baixa (posto agitado)</option>
+          <option value="0.06" selected>Média (padrão)</option>
+          <option value="0.03">Alta (movimento pequeno)</option>
+        </select></div>
+    </div>
+    <div class="linha-btn">
+      <button class="claro" onclick="App.desfazerPonto()">Desfazer ponto</button>
+      <button class="terra" onclick="App.salvarROI()">Salvar região</button>
+    </div>
+    <div id="lista-rois" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card navy">
+    <span class="badge estrategico">3 · Medição</span>
+    <div class="linha-btn" style="margin-top:12px">
+      <button class="amarelo" id="btn-iniciar" onclick="App.iniciar()">Iniciar captura</button>
+      <button class="claro" id="btn-fundo" onclick="App.redefinirFundo()" disabled>Zerar fundo</button>
+      <button class="perigo" id="btn-parar" onclick="App.parar()" disabled>Parar e salvar</button>
+    </div>
+    <div id="cronometro-manual" style="margin-top:14px" hidden>
+      <h3 style="margin-top:0">Cronômetro manual</h3>
+      <p class="sub" style="margin-bottom:8px">Toque no elemento que está começando. Serve sozinho ou para validar a câmera.</p>
+      <div class="linha-btn" id="botoes-manual"></div>
+      <button class="claro bloco" style="margin-top:8px" onclick="App.marcar('', true)">Fim de ciclo</button>
+    </div>
+    <div class="kpis" id="kpis-vivo" style="margin-top:14px"></div>
+    <div class="log" id="log" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- ============================================ RESULTADO =========== -->
+<section class="tela" id="tela-resultado">
+  <h2>Resultado</h2>
+  <p class="sub" id="resultado-sub">—</p>
+  <div id="resultado-conteudo"><div class="vazio-lista">Nenhuma medição carregada.</div></div>
+</section>
+
+</main>
+
+<nav class="rodape">
+  <button class="ativo" data-tela="estudos" onclick="App.irPara('estudos')">Estudos</button>
+  <button data-tela="captura" onclick="App.irPara('captura')">Captura</button>
+  <button data-tela="resultado" onclick="App.irPara('resultado')">Resultado</button>
+</nav>
+
+<footer>Grupo Prado · Safety Prado · Country Prado · Itanhandu &amp; Guaxupé · 2026</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
