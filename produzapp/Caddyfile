@@ -1,0 +1,5 @@
+# HTTPS automático (certificado Let's Encrypt). O domínio vem do .env: DOMINIO=producao.pradocalcados.com.br
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy api:3000
+}

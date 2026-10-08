@@ -1,4 +1,4 @@
-# Sobe API + telas + PostgreSQL. Uso:  cp .env.example .env  (preencha)  &&  docker compose up -d
+# Sobe API + telas + PostgreSQL + HTTPS (Caddy). Antes: apontar o DNS de producao.pradocalcados.com.br para o IP da VPS e liberar as portas 80 e 443. Uso:  cp .env.example .env  (preencha)  &&  docker compose up -d
 services:
   db:
     image: postgres:16
@@ -18,6 +18,17 @@ services:
       DATABASE_URL: postgres://produzapp:${POSTGRES_PASSWORD}@db:5432/produzapp
       API_KEYS: ${API_KEYS:?defina API_KEYS no .env}
       PORT: 3000
-    ports: ["3000:3000"]   # no VPS, coloque um proxy HTTPS (Caddy) na frente e troque por "127.0.0.1:3000:3000"
+    # sem "ports": só o Caddy (abaixo) fala com a API
+    expose: ["3000"]
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env (ex.: producao.pradocalcados.com.br)}
+    ports: ["80:80", "443:443"]
+    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_dados:/data, caddy_config:/config]
 volumes:
   dados:
+  caddy_dados:
+  caddy_config:
