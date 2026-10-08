@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: produzapp API
+  version: 0.1.0
+  description: |
+    API de gestão de produção do Grupo Prado. Autenticação por chave no cabeçalho `x-api-key`
+    (uma chave por cliente da API). Exceto `/saude`, todas as rotas exigem a chave.
+servers:
+  - url: http://localhost:3000
+security:
+  - ApiKey: []
+paths:
+  /saude:
+    get:
+      summary: Verifica se a API está no ar (público)
+      security: []
+      responses:
+        '200': { description: OK }
+  /leituras:
+    post:
+      summary: Registra uma leitura de código de barras na estação
+      description: |
+        Formatos: `OP-CAIXA-SIGLA` (ex. 00101-01-COR), `OP-SIGLA`, `PARADA-SIGLA-MOTIVO`, `RETOMA-SIGLA`.
+        Enviar o mesmo `idLeitura` de novo devolve o resultado já gravado, sem duplicar a baixa.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, estacao]
+              properties:
+                codigo:    { type: string, example: 00101-01-COR }
+                estacao:   { $ref: '#/components/schemas/Sigla' }
+                idLeitura: { type: string, description: Identificador único da leitura (idempotência) }
+                operador:  { type: string }
+      responses:
+        '200':
+          description: Resultado da leitura (inclusive recusas, com a mensagem pronta para a tela)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoLeitura' }
+        '400': { description: Faltam campos }
+  /ordens:
+    get:
+      summary: Lista as OPs com etapa atual, situação do prazo e atraso
+      parameters:
+        - { name: cliente,  in: query, schema: { type: string } }
+        - { name: produto,  in: query, schema: { type: string } }
+        - { name: situacao, in: query, schema: { $ref: '#/components/schemas/Situacao' } }
+      responses:
+        '200':
+          description: Ordenadas por atraso (maior primeiro) e depois por previsão inicial
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Ordem' } }
+    post:
+      summary: Cria uma OP (uma por caixa)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [op, caixa, cliente, produto, pares, previsaoInicial]
+              properties:
+                op:              { type: string, example: '101' }
+                caixa:           { type: string, example: '1' }
+                plano:           { type: string }
+                cliente:         { type: string }
+                produto:         { type: string }
+                pares:           { type: integer, minimum: 1 }
+                entrada:         { type: string, format: date }
+                previsaoInicial: { type: string, format: date }
+      responses:
+        '201': { description: Criada, content: { application/json: { schema: { $ref: '#/components/schemas/Ordem' } } } }
+        '400': { description: Dados incompletos ou inválidos }
+        '409': { description: Já existe OP com esse número e caixa }
+  /ordens/{id}:
+    get:
+      summary: Detalhe da OP, com eventos de etapa e histórico de previsão
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '404': { description: Não encontrada }
+  /ordens/{id}/previsao:
+    patch:
+      summary: Reprograma a previsão atual (a inicial nunca muda); motivo obrigatório
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [para, motivo]
+              properties:
+                para:   { type: string, format: date }
+                motivo: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Não encontrada }
+        '422': { description: Falta a data ou o motivo }
+  /paradas:
+    get:
+      summary: Lista as paradas registradas
+      responses:
+        '200': { description: OK }
+  /indicadores:
+    get:
+      summary: Indicadores consolidados (prazo médio, atraso, pares por etapa, avanço)
+      responses:
+        '200': { description: OK }
+  /sincronizacao/pendentes:
+    get:
+      summary: Itens aguardando envio ao Bling/Odoo e itens que falharam
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    ApiKey: { type: apiKey, in: header, name: x-api-key }
+  schemas:
+    Sigla:
+      type: string
+      enum: [COR, PES, EST, INJ, ACA, EMB, EXP]
+      description: Corte, Pesponto, Esteira de Montagem, Injetora, Esteira de Acabamento, Embalagem, Expedição
+    Situacao:
+      type: string
+      enum: [no_prazo, em_risco, atrasada, concluida]
+    ResultadoLeitura:
+      type: object
+      properties:
+        idLeitura: { type: string }
+        status:
+          type: string
+          enum: [ok, repetida, fora_da_estacao, fora_de_sequencia, parada_aberta, parada_encerrada, erro]
+        mensagem:  { type: string }
+        aviso:     { type: string, description: Ex. leitor sem Enter configurado }
+        ordemId:   { type: string, format: uuid }
+        pares:     { type: integer }
+        concluida: { type: boolean }
+    Ordem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        op: { type: string }
+        caixa: { type: string }
+        plano: { type: string }
+        cliente: { type: string }
+        produto: { type: string }
+        pares: { type: integer }
+        entrada: { type: string, format: date-time }
+        previsaoInicial: { type: string, format: date-time }
+        previsaoAtual: { type: string, format: date-time }
+        reprogramadaDias: { type: integer }
+        etapasConcluidas: { type: integer }
+        etapaAtual: { type: string }
+        situacao: { $ref: '#/components/schemas/Situacao' }
+        atrasoDias: { type: integer }
+        diasProducao: { type: integer }
+        prazoPlanejadoDias: { type: integer }

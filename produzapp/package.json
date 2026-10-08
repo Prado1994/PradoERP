@@ -1,0 +1,31 @@
+{
+  "name": "produzapp",
+  "version": "0.1.0",
+  "description": "Gestão de produção do Grupo Prado: OPs, leituras por etapa, prazos e API para integrar Bling e Odoo.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "SEED=1 tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "migrar": "tsx scripts/migrar.ts",
+    "test:pg": "vitest run tests/repositorio.contrato.test.ts"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estação de Baixa · Prado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C2632; --blue:#2C3B4E; --terra:#9F5234; --yellow:#FEC761; --beige:#CCC1A9; --warm:#FFFCF4;
+    --bg:#0d1117; --panel:#161c27; --text:#f2f5f9; --dim:#8a95a8; --border:#262f40;
+    --ok:#1a9850; --ok-bg:#0e2318; --err:#e0392b; --err-bg:#2c1310; --warn:#d9a62b; --warn-bg:#2c2410;
+    --neutral:#2f6fed;
+    --font:'DM Sans',system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){ --bg:#eef1f6; --panel:#ffffff; --text:#131722; --dim:#5c6577; --border:#d7dce6; }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--font);
+    display:flex; flex-direction:column; height:100%; overflow:hidden;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    transition:background-color .18s ease;
+  }
+  body.dash{ background:var(--navy); color:var(--warm); }
+
+  /* ---------- Navegação ---------- */
+  nav.topo{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:8px 20px; border-bottom:1px solid var(--border); flex-shrink:0; position:relative; z-index:3;
+  }
+  body.dash nav.topo{ border-bottom-color:rgba(255,255,255,.12); background:rgba(28,38,50,.55); backdrop-filter:blur(12px); }
+  .marca{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:.95rem; }
+  .marca .p{ width:30px; height:30px; border-radius:8px; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .pills{ display:flex; gap:6px; }
+  .pill{
+    padding:7px 16px; border-radius:100px; border:1px solid var(--border); background:transparent;
+    color:var(--dim); font:600 .78rem var(--font); cursor:pointer; letter-spacing:.3px;
+  }
+  body.dash .pill{ border-color:rgba(255,255,255,.2); color:var(--beige); }
+  .pill.on{ background:var(--yellow); color:var(--navy); border-color:var(--yellow); }
+  .selo{ font-size:.62rem; color:var(--dim); letter-spacing:1px; opacity:.75; text-align:right; }
+  body.dash .selo{ color:var(--beige); }
+
+  /* ================= ESTAÇÃO ================= */
+  #viewEstacao{ display:flex; flex-direction:column; flex:1; min-height:0; user-select:none; }
+  header.est{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 24px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .setor-box{display:flex; align-items:center; gap:10px;}
+  .setor-nome{font-size:1.3rem; font-weight:800; letter-spacing:.5px;}
+  .setor-nome small{display:block; font-size:.65rem; font-weight:500; color:var(--dim); letter-spacing:1px;}
+  .relogio{text-align:right; font-variant-numeric:tabular-nums;}
+  .relogio .hora{font-size:1.6rem; font-weight:700; line-height:1;}
+  .relogio .data{font-size:.75rem; color:var(--dim);}
+  .cfg{ width:14px; height:14px; border-radius:50%; background:var(--border); cursor:pointer; margin-left:14px; flex-shrink:0; }
+  main.est{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px; text-align:center; }
+  .status-msg{ font-size:clamp(2.2rem, 6vw, 4.2rem); font-weight:800; line-height:1.05; min-height:1.3em; }
+  .status-sub{ font-size:clamp(1rem, 2.2vw, 1.4rem); color:var(--dim); font-weight:600; min-height:1.3em; }
+  .campo-wrap{ width:min(680px, 92vw); }
+  #campo{
+    width:100%; text-align:center; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:clamp(1.6rem, 4.5vw, 2.6rem); font-weight:700; letter-spacing:2px;
+    padding:22px 16px; border-radius:14px; border:3px solid var(--border);
+    background:var(--panel); color:var(--text); outline:none; text-transform:uppercase;
+  }
+  #campo:focus{ border-color:var(--neutral); }
+  .dica{ font-size:.85rem; color:var(--dim); }
+  footer.est{ flex-shrink:0; border-top:1px solid var(--border); padding:10px 20px; display:flex; gap:10px; overflow-x:auto; }
+  .hist-item{ flex-shrink:0; min-width:150px; padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel); font-size:.72rem; line-height:1.4; }
+  .hist-item .hcode{font-family:monospace; font-weight:700; font-size:.85rem;}
+  .hist-item.ok{border-color:var(--ok);} .hist-item.err{border-color:var(--err);} .hist-item.warn{border-color:var(--warn);}
+  .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;}
+  .dot.ok{background:var(--ok);} .dot.err{background:var(--err);} .dot.warn{background:var(--warn);}
+  body.flash-ok{ background:var(--ok-bg) !important; }
+  body.flash-err{ background:var(--err-bg) !important; }
+  body.flash-warn{ background:var(--warn-bg) !important; }
+
+  .seletor-bg{ position:fixed; inset:0; background:var(--bg); z-index:20; display:none; flex-direction:column; align-items:center; justify-content:center; padding:32px; gap:22px; }
+  .seletor-bg.show{ display:flex; }
+  .seletor-titulo{ font-size:clamp(1.4rem,3.2vw,2rem); font-weight:800; }
+  .seletor-sub{ color:var(--dim); font-size:.95rem; margin-top:-12px; text-align:center; max-width:480px; }
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:16px; width:min(900px,94vw); }
+  .tile{ background:var(--panel); border:2px solid var(--border); border-radius:16px; padding:22px 16px; cursor:pointer; text-align:center; transition:border-color .12s, transform .06s; }
+  .tile:hover{ border-color:var(--neutral); } .tile:active{ transform:scale(.97); }
+  .tile.selecionada{ border-color:var(--ok); background:var(--ok-bg); }
+  .tile .sig{ font-size:1.8rem; font-weight:900; font-family:monospace; }
+  .tile .nome{ font-size:.78rem; color:var(--dim); margin-top:6px; }
+  .seletor-fechar{ margin-top:6px; padding:10px 22px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--dim); font-weight:700; cursor:pointer; }
+
+  /* ================= ACOMPANHAMENTO (Vidro Prado) ================= */
+  .bg-deco{ position:fixed; inset:0; z-index:0; pointer-events:none; display:none; overflow:hidden; }
+  body.dash .bg-deco{ display:block; }
+  .bg-deco i{ position:absolute; border-radius:50%; filter:blur(100px); }
+  .bg-deco .a{ width:480px; height:480px; background:var(--terra); opacity:.5; top:-140px; left:-120px; }
+  .bg-deco .b{ width:420px; height:420px; background:var(--yellow); opacity:.18; bottom:-160px; right:-100px; }
+  .bg-deco .c{ width:560px; height:560px; background:var(--blue); opacity:.9; top:25%; left:38%; }
+
+  #viewDash{ display:none; flex:1; min-height:0; overflow-y:auto; position:relative; z-index:2; }
+  body.dash #viewDash{ display:block; }
+  body.dash #viewEstacao{ display:none; }
+  .d-wrap{ max-width:1280px; margin:0 auto; padding:22px 20px 40px; }
+  .d-head{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .d-head h1{ margin:0; font-size:1.7rem; font-weight:700; color:var(--yellow); }
+  .d-head .sub{ color:var(--beige); font-size:.85rem; margin-top:4px; }
+  .d-head .hoje{ color:var(--beige); font-size:.85rem; text-align:right; }
+  .glass{
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-radius:16px;
+  }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:14px; }
+  .kpi{ padding:14px 16px; }
+  .kpi .l{ font-size:.66rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; color:var(--beige); }
+  .kpi .v{ font-size:2rem; font-weight:700; color:var(--yellow); line-height:1.15; margin-top:4px; font-variant-numeric:tabular-nums; }
+  .kpi .s{ font-size:.75rem; color:var(--beige); margin-top:2px; }
+  .kpi.alerta .v{ color:#fff; }
+  .kpi.alerta{ border-top:3px solid var(--terra); }
+
+  .flow{ padding:16px 18px; margin-bottom:14px; }
+  .flow h3, .tab-head h3{ margin:0 0 12px; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--beige); }
+  .flow-grid{ display:grid; grid-template-columns:repeat(8,1fr); gap:10px; align-items:end; }
+  .fcol{ text-align:center; }
+  .fbar-wrap{ height:90px; display:flex; align-items:flex-end; justify-content:center; }
+  .fbar{ width:70%; max-width:56px; border-radius:8px 8px 3px 3px; background:var(--yellow); min-height:4px; transition:height .4s; }
+  .fcol.fim .fbar{ background:var(--beige); }
+  .fcol .n{ font-weight:700; font-size:1.05rem; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .fcol .p{ font-size:.66rem; color:var(--beige); }
+  .fcol .nm{ font-size:.68rem; font-weight:600; margin-top:3px; line-height:1.2; }
+
+  .filtros{ padding:12px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .filtros input, .filtros select{
+    background:rgba(255,255,255,.09); color:var(--warm); border:1px solid rgba(255,255,255,.2);
+    border-radius:10px; padding:9px 12px; font:500 .85rem var(--font); outline:none; min-width:140px;
+  }
+  .filtros input{ flex:1; min-width:200px; }
+  .filtros input::placeholder{ color:var(--beige); }
+  .filtros option{ color:#1C2632; }
+  .filtros label{ font-size:.66rem; color:var(--beige); text-transform:uppercase; letter-spacing:1px; display:flex; flex-direction:column; gap:4px; }
+  .filtros .limpar{ background:transparent; border:1px solid rgba(255,255,255,.25); color:var(--beige); border-radius:10px; padding:9px 14px; font:600 .8rem var(--font); cursor:pointer; align-self:flex-end; }
+
+  .tabela{ padding:6px 4px 10px; overflow-x:auto; }
+  .tab-head{ padding:12px 14px 0; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; }
+  .tab-head .cont{ font-size:.75rem; color:var(--beige); }
+  table{ width:100%; border-collapse:collapse; min-width:1240px; }
+  th{ text-align:left; font-size:.64rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--beige); padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.14); white-space:nowrap; }
+  td{ padding:10px 12px; font-size:.84rem; border-bottom:1px solid rgba(255,255,255,.07); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  tr.lin{ cursor:pointer; }
+  tr.lin:hover td{ background:rgba(255,255,255,.06); }
+  td .op{ font-weight:700; } td .cx{ color:var(--beige); font-size:.72rem; }
+  td.num{ text-align:right; }
+  .prog{ display:flex; gap:3px; min-width:150px; }
+  .prog b{ flex:1; height:9px; border-radius:3px; background:rgba(255,255,255,.14); }
+  .prog b.f{ background:var(--yellow); } .prog b.a{ background:var(--terra); box-shadow:0 0 0 1px rgba(255,255,255,.35); }
+  .badge{ display:inline-block; font-size:.64rem; font-weight:700; padding:4px 11px; border-radius:100px; letter-spacing:.6px; text-transform:uppercase; }
+  .badge.atras{ background:var(--terra); color:#fff; }
+  .badge.risco{ background:var(--yellow); color:var(--navy); }
+  .badge.prazo{ background:var(--blue); color:var(--beige); border:1px solid rgba(255,255,255,.2); }
+  .badge.concl{ background:transparent; color:var(--yellow); border:1px solid var(--yellow); }
+  tr.det td{ background:rgba(0,0,0,.18); white-space:normal; }
+  .linha-tempo{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; min-width:880px; }
+  .lt{ padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.14); font-size:.72rem; }
+  .lt.f{ border-color:var(--yellow); } .lt.a{ border-color:var(--terra); background:rgba(159,82,52,.25); }
+  .lt .t{ font-weight:700; font-size:.76rem; margin-bottom:2px; } .lt .h{ color:var(--beige); }
+  tr.lin.late td{ background:rgba(159,82,52,.18); }
+  tr.lin.late td:first-child{ box-shadow:inset 4px 0 0 var(--terra); }
+  .atr{ display:inline-block; font-weight:700; background:var(--terra); color:#fff; padding:3px 10px; border-radius:8px; font-size:.84rem; }
+  .atr.ok{ background:transparent; color:var(--beige); font-weight:500; padding:3px 0; }
+  .atr.fim{ background:transparent; color:var(--yellow); border:1px solid var(--yellow); font-size:.74rem; }
+  .reprog{ color:var(--yellow); font-size:.68rem; font-weight:600; display:block; }
+  .dprod b{ font-size:.9rem; } .dprod small{ color:var(--beige); font-size:.68rem; display:block; }
+  .dprod.over b{ color:var(--yellow); }
+  .teste{ margin-top:12px; font-size:.78rem; color:var(--beige); text-align:center; }
+  .teste code{ background:rgba(255,255,255,.12); padding:2px 8px; border-radius:6px; color:var(--yellow); font-weight:700; }
+  .rodape{ margin-top:22px; text-align:center; font-size:.7rem; color:var(--beige); opacity:.8; }
+  @media (max-width:760px){ .flow-grid{ grid-template-columns:repeat(4,1fr); } }
+</style>
+</head>
+<body>
+
+  <div class="bg-deco"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+
+  <nav class="topo">
+    <div class="marca"><div class="p">P</div><span>Estação de Baixa</span></div>
+    <div class="pills">
+      <button class="pill on" id="pEst">Estação</button>
+      <button class="pill" id="pDash">Acompanhamento</button>
+    </div>
+    <div class="selo">PROTÓTIPO · DADOS SIMULADOS<br>NÃO GRAVA NO BLING/ODOO</div>
+  </nav>
+
+  <!-- ================= ESTAÇÃO ================= -->
+  <div id="viewEstacao">
+    <div class="seletor-bg" id="seletorBg">
+      <div class="seletor-titulo">Qual estação é esta?</div>
+      <div class="seletor-sub">Escolha o setor deste computador. A tela só valida leituras do setor selecionado — reduz o risco de bipar a caixa errada na estação errada.</div>
+      <div class="tiles" id="tiles"></div>
+      <button class="seletor-fechar" id="seletorFechar" style="display:none;">Cancelar</button>
+    </div>
+
+    <header class="est">
+      <div class="setor-box">
+        <div class="setor-nome" id="setorNomeTxt">—<small>ESTAÇÃO DE BAIXA</small></div>
+        <div class="cfg" id="cfgBtn" title="Trocar estação (duplo clique)"></div>
+      </div>
+      <div class="relogio">
+        <div class="hora" id="hora">--:--:--</div>
+        <div class="data" id="data">--/--/----</div>
+      </div>
+    </header>
+
+    <main class="est">
+      <div class="status-msg" id="statusMsg">Pronto para leitura</div>
+      <div class="status-sub" id="statusSub">Aponte o leitor para o campo abaixo e passe o código</div>
+      <div class="campo-wrap">
+        <input id="campo" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="AGUARDANDO LEITURA...">
+      </div>
+      <div class="dica">Não use o mouse. Não é preciso clicar em nada — apenas leia o código.</div>
+    </main>
+
+    <footer class="est" id="historico"></footer>
+  </div>
+
+  <!-- ================= ACOMPANHAMENTO ================= -->
+  <div id="viewDash">
+    <div class="d-wrap">
+      <div class="d-head">
+        <div>
+          <h1>Acompanhamento da Produção</h1>
+          <div class="sub">Por ordem de produção, cliente e produto · entrada, previsão de entrega e etapa atual</div>
+        </div>
+        <div class="hoje" id="dHoje"></div>
+      </div>
+
+      <div class="kpis" id="kpis"></div>
+
+      <div class="glass flow">
+        <h3>Onde estão os pares agora (por etapa)</h3>
+        <div class="flow-grid" id="flow"></div>
+      </div>
+
+      <div class="glass filtros">
+        <input id="fBusca" type="text" placeholder="Buscar OP, cliente ou produto...">
+        <label>Cliente<select id="fCliente"></select></label>
+        <label>Produto<select id="fProduto"></select></label>
+        <label>Situação
+          <select id="fSit">
+            <option value="">Todas</option>
+            <option value="atras">Atrasadas</option>
+            <option value="risco">Em risco</option>
+            <option value="prazo">No prazo</option>
+            <option value="concl">Concluídas</option>
+          </select>
+        </label>
+        <label>Agrupar por
+          <select id="fGrupo">
+            <option value="ordem">Ordem de produção</option>
+            <option value="cliente">Cliente</option>
+            <option value="produto">Produto</option>
+          </select>
+        </label>
+        <button class="limpar" id="fLimpar">Limpar</button>
+      </div>
+
+      <div class="glass tabela">
+        <div class="tab-head"><h3 id="tabTitulo">Ordens de produção</h3><div class="cont" id="tabCont"></div></div>
+        <table id="tabela"></table>
+      </div>
+
+      <div class="teste">Teste a integração: na aba <b>Estação</b> escolha <b>Corte</b> e leia <code>00101-01-COR</code> — a OP 00101 avança aqui na hora.</div>
+      <div class="rodape">Grupo Prado · Safety Prado · Country Prado · Itanhandu &amp; Guaxupé · 2026</div>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  //  DADOS BASE
+  // ============================================================
+  const SETORES = {
+    COR:'Corte', PES:'Pesponto', EST:'Esteira de Montagem',
+    INJ:'Injetora', ACA:'Esteira de Acabamento', EMB:'Embalagem', EXP:'Expedição'
+  };
+  const ETAPAS = Object.entries(SETORES).map(([sig,nome]) => ({sig, nome}));
+
+  // ---------- Navegação entre telas ----------
+  const pEst = document.getElementById('pEst'), pDash = document.getElementById('pDash');
+  function irPara(tela){
+    const dash = tela === 'dash';
+    document.body.classList.toggle('dash', dash);
+    pDash.classList.toggle('on', dash); pEst.classList.toggle('on', !dash);
+    try{ history.replaceState(null,'', dash ? '#acompanhamento' : '#estacao'); }catch(e){}
+    if (dash){ renderDash(); } else { refoco(); }
+  }
+  pEst.addEventListener('click', () => irPara('est'));
+  pDash.addEventListener('click', () => irPara('dash'));
+  const emDash = () => document.body.classList.contains('dash');
+
+  // ============================================================
+  //  ESTAÇÃO
+  // ============================================================
+  const campo = document.getElementById('campo');
+  const statusMsg = document.getElementById('statusMsg');
+  const statusSub = document.getElementById('statusSub');
+  const historico = document.getElementById('historico');
+  const setorNomeTxt = document.getElementById('setorNomeTxt');
+  const seletorBg = document.getElementById('seletorBg');
+  const tilesEl = document.getElementById('tiles');
+  const seletorFechar = document.getElementById('seletorFechar');
+  const SIG_KEY = 'estacaoBaixa.sigla';
+
+  function siglaAtual(){
+    let s = '';
+    try{ s = localStorage.getItem(SIG_KEY) || ''; }catch(e){}
+    return SETORES[s] ? s : '';
+  }
+  function aplicarSigla(sig){
+    try{ localStorage.setItem(SIG_KEY, sig); }catch(e){}
+    setorNomeTxt.innerHTML = SETORES[sig].toUpperCase() + '<small>ESTAÇÃO DE BAIXA · ' + sig + '</small>';
+    fecharSeletor(); if (!emDash()) campo.focus();
+  }
+  function montarTiles(){
+    tilesEl.innerHTML = '';
+    Object.entries(SETORES).forEach(([sig, nome]) => {
+      const t = document.createElement('div');
+      t.className = 'tile' + (sig === siglaAtual() ? ' selecionada' : '');
+      t.innerHTML = `<div class="sig">${sig}</div><div class="nome">${nome}</div>`;
+      t.addEventListener('click', () => aplicarSigla(sig));
+      tilesEl.appendChild(t);
+    });
+  }
+  function abrirSeletor(permiteCancelar){
+    montarTiles();
+    seletorFechar.style.display = permiteCancelar ? 'inline-block' : 'none';
+    seletorBg.classList.add('show');
+  }
+  function fecharSeletor(){ seletorBg.classList.remove('show'); }
+  seletorFechar.addEventListener('click', fecharSeletor);
+  document.getElementById('cfgBtn').addEventListener('dblclick', () => abrirSeletor(true));
+
+  if (!siglaAtual()) abrirSeletor(false); else aplicarSigla(siglaAtual());
+
+  function tick(){
+    const d = new Date();
+    document.getElementById('hora').textContent = d.toLocaleTimeString('pt-BR');
+    document.getElementById('data').textContent = d.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  tick(); setInterval(tick, 1000);
+
+  function refoco(){ if (!emDash() && !seletorBg.classList.contains('show')) campo.focus(); }
+  document.addEventListener('click', refoco);
+  setInterval(refoco, 2000);
+
+  let actx;
+  function beep(freqs, dur=120){
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      let t = actx.currentTime;
+      freqs.forEach((f) => {
+        const osc = actx.createOscillator(), gain = actx.createGain();
+        osc.frequency.value = f; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur/1000);
+        osc.connect(gain); gain.connect(actx.destination);
+        osc.start(t); osc.stop(t + dur/1000); t += dur/1000;
+      });
+    }catch(e){}
+  }
+  const somOk = () => beep([880,1180],110), somErro = () => beep([220,160],180), somRepet = () => beep([520],140);
+
+  let ultimoCodigo = '', ultimoTempo = 0;
+  function destrancarColado(v){
+    for (const rep of [3,2]){
+      if (v.length % rep === 0){ const p = v.slice(0, v.length/rep); if (p.repeat(rep) === v) return p; }
+    }
+    return v;
+  }
+
+  function processar(bruto){
+    let valor = bruto.trim().toUpperCase();
+    if (!valor) return;
+    const estacao = siglaAtual();
+    if (!estacao){ abrirSeletor(false); return; }
+
+    let colado = false;
+    const sc = destrancarColado(valor);
+    if (sc !== valor){ colado = true; valor = sc; }
+
+    const agora = Date.now();
+    if (valor === ultimoCodigo && (agora - ultimoTempo) < 4000){
+      mostrar('warn','LEITURA REPETIDA',`${valor} já foi lida — ignorada para não duplicar`);
+      registrar(valor,'warn','Repetida — ignorada'); somRepet(); limpar(); return;
+    }
+    ultimoCodigo = valor; ultimoTempo = agora;
+
+    let m = valor.match(/^PARADA-([A-Z]{2,5})-(.+)$/);
+    if (m){
+      const setor = SETORES[m[1]];
+      if (!setor){ erro(valor, `Sigla de setor "${m[1]}" não existe`); return; }
+      if (m[1] !== estacao){ foraDaEstacao(valor, m[1], estacao); return; }
+      mostrar('warn','PARADA ABERTA',`${setor} — motivo: ${m[2].replaceAll('-',' ')} (simulado)`);
+      registrar(valor,'warn',`Parada · ${setor}`); somRepet(); limpar(); return;
+    }
+    m = valor.match(/^RETOMA-([A-Z]{2,5})$/);
+    if (m){
+      const setor = SETORES[m[1]];
+      if (!setor){ erro(valor, `Sigla de setor "${m[1]}" não existe`); return; }
+      if (m[1] !== estacao){ foraDaEstacao(valor, m[1], estacao); return; }
+      mostrar('ok','PARADA ENCERRADA',`${setor} voltou a produzir (simulado)`);
+      registrar(valor,'ok',`Retomada · ${setor}`); somOk(); limpar(); return;
+    }
+    m = valor.match(/^(\d{3,6})-(\d{1,3})-([A-Z]{2,5})$/);
+    if (m){
+      const [, op, caixa, sig] = m;
+      const setor = SETORES[sig];
+      if (!setor){ erro(valor, `Sigla de setor "${sig}" não existe`); return; }
+      if (sig !== estacao){ foraDaEstacao(valor, sig, estacao); return; }
+      const o = acharOP(op, caixa);
+      const pares = o ? o.pares : 20;
+      const nota = avancarOP(o, sig);
+      mostrar('ok',`OK · ${pares} PARES`,`Caixa ${caixa} · OP ${op} · ${setor}${nota}${colado ? '  ⚠ leitura colada — configure Enter no leitor' : ''}`);
+      registrar(valor,'ok',`${pares} pares · ${setor}`, colado); somOk(); limpar(); return;
+    }
+    m = valor.match(/^(\d{3,6})-([A-Z]{2,5})$/);
+    if (m){
+      const [, op, sig] = m;
+      const setor = SETORES[sig];
+      if (!setor){ erro(valor, `Sigla de setor "${sig}" não existe`); return; }
+      if (sig !== estacao){ foraDaEstacao(valor, sig, estacao); return; }
+      mostrar('ok','OP CONCLUÍDA NO SETOR',`OP ${op} inteira · ${setor} (simulado)${colado ? '  ⚠ leitura colada' : ''}`);
+      registrar(valor,'ok',`OP inteira · ${setor}`, colado); somOk(); limpar(); return;
+    }
+    erro(valor, 'Formato não reconhecido. Use OP-CAIXA-SIGLA, ex.: 00034-05-EMB');
+  }
+  function foraDaEstacao(valor, sigLida, sigEstacao){
+    mostrar('warn','CÓDIGO DE OUTRO SETOR',`Este código é de ${SETORES[sigLida]}, mas esta estação está configurada como ${SETORES[sigEstacao]}`);
+    registrar(valor,'warn',`Pertence a ${sigLida}, não a ${sigEstacao}`); somRepet(); limpar();
+  }
+  function erro(valor, motivo){ mostrar('err','CÓDIGO INVÁLIDO',motivo); registrar(valor,'err',motivo); somErro(); limpar(); }
+  function mostrar(tipo, titulo, sub){
+    statusMsg.textContent = titulo; statusSub.textContent = sub;
+    document.body.classList.remove('flash-ok','flash-err','flash-warn');
+    document.body.classList.add('flash-' + tipo);
+    clearTimeout(mostrar._t);
+    mostrar._t = setTimeout(() => {
+      document.body.classList.remove('flash-ok','flash-err','flash-warn');
+      statusMsg.textContent = 'Pronto para leitura';
+      statusSub.textContent = 'Aponte o leitor para o campo abaixo e passe o código';
+    }, 1900);
+  }
+  function registrar(codigo, tipo, detalhe, colado){
+    const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const div = document.createElement('div');
+    div.className = 'hist-item ' + tipo;
+    div.innerHTML = `<span class="dot ${tipo}"></span><span class="hcode">${codigo}</span><br>${detalhe}<br><span style="color:var(--dim)">${hora}${colado ? ' · colado' : ''}</span>`;
+    historico.prepend(div);
+    while (historico.children.length > 12) historico.removeChild(historico.lastChild);
+  }
+  function limpar(){ campo.value = ''; }
+  campo.addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); processar(campo.value); } });
+  campo.addEventListener('input', () => { if (campo.value.length > 40) limpar(); });
+
+  // ============================================================
+  //  DADOS SIMULADOS DE OPs (no real: vêm do Bling via API)
+  // ============================================================
+  const DIA = 86400000;
+  const hoje0 = new Date(); hoje0.setHours(0,0,0,0);
+  function rng(seed){ return () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; }
+  const R = rng(20261008);
+  const CLIENTES = [['Estoque Prado',9],['Indústria de Calçado',4],['Log Teresina',2],['Cooperativa',2],['Proteção Comercial',2],['Log Goiânia',1],['ArteEPI Safety',2]];
+  const PRODUTOS = [['40501','Bota elástica ECO PVC',8],['45501','Bota elástica PVC',4],['45505','Sapato elástico PVC',2],['45502','Bota cadarço PVC',2],['46601','Bota elástica composite',2]];
+  function sortear(lista){
+    const tot = lista.reduce((a,x) => a + x[x.length-1], 0);
+    let r = R() * tot;
+    for (const x of lista){ r -= x[x.length-1]; if (r <= 0) return x; }
+    return lista[0];
+  }
+  const OPS = [];
+  for (let i = 0; i < 36; i++){
+    const cli = sortear(CLIENTES)[0];
+    const p = sortear(PRODUTOS);
+    let idade = 1 + Math.floor(R()*20);
+    let prazo = 6 + Math.floor(R()*13);
+    let etapa = Math.min(7, Math.floor((idade/prazo) * 7 * (0.6 + R()*0.7)));
+    if (i === 0){ idade = 1; prazo = 10; etapa = 0; }   // OP 00101-01 serve de teste na estação
+    const entrada = new Date(hoje0.getTime() - idade*DIA);
+    const previsaoInicial = new Date(entrada.getTime() + prazo*DIA);
+    const reprog = (i > 0 && R() < .3) ? 1 + Math.floor(R()*5) : 0;   // dias de reprogramação
+    const previsao = new Date(previsaoInicial.getTime() + reprog*DIA);
+    const eventos = [];
+    for (let k = 0; k < etapa; k++){
+      eventos.push({ sig: ETAPAS[k].sig, ts: new Date(entrada.getTime() + ((k+1)/(etapa+1)) * idade*DIA + 8*3600000) });
+    }
+    OPS.push({
+      op: String(101+i).padStart(5,'0'), caixa: String(1 + (i % 8)).padStart(2,'0'),
+      cliente: cli, produto: p[0] + ' · ' + p[1], pares: R() < .7 ? 20 : 10,
+      entrada, previsaoInicial, previsao, etapa, eventos
+    });
+  }
+  function acharOP(op, caixa){
+    return OPS.find(x => x.op === op.padStart(5,'0') && x.caixa === caixa.padStart(2,'0')) || null;
+  }
+  function avancarOP(o, sig){
+    if (!o) return '';
+    const idx = ETAPAS.findIndex(e => e.sig === sig);
+    if (o.etapa === idx){ o.etapa++; o.eventos.push({sig, ts:new Date()}); if (emDash()) renderDash(); return ' · acompanhamento atualizado'; }
+    if (idx < o.etapa) return ' · etapa já registrada no acompanhamento';
+    return ' · ⚠ falta ler ' + ETAPAS[o.etapa].nome + ' antes';
+  }
+
+  // ============================================================
+  //  ACOMPANHAMENTO
+  // ============================================================
+  const media = (a, f) => a.length ? a.reduce((s,x) => s + f(x), 0) / a.length : null;
+  const d1 = n => n === null ? '—' : n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+  const fmtData = d => d.toLocaleDateString('pt-BR');
+  const fmtHora = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const nf = n => n.toLocaleString('pt-BR');
+  // Prazo medido sempre contra a PREVISÃO INICIAL (compromisso original). A previsão atual
+  // (reprogramada) aparece ao lado, mas não esconde o atraso.
+  const dif = o => Math.round((o.previsaoInicial - hoje0) / DIA);   // dias até a previsão inicial
+  const fimReal = o => o.etapa >= 7 && o.eventos.length ? o.eventos[o.eventos.length-1].ts : null;
+  const planejado = o => Math.round((o.previsaoInicial - o.entrada) / DIA);
+  function diasProd(o){
+    const fim = fimReal(o) || new Date();
+    return Math.max(0, Math.round((fim - o.entrada) / DIA));
+  }
+  function atrasoDias(o){            // dias de atraso (abertas: até hoje; concluídas: na conclusão)
+    const fim = fimReal(o);
+    if (fim){ const d0 = new Date(fim); d0.setHours(0,0,0,0); return Math.max(0, Math.round((d0 - o.previsaoInicial) / DIA)); }
+    return Math.max(0, -dif(o));
+  }
+  function situacao(o){
+    if (o.etapa >= 7) return 'concl';
+    const d = dif(o);
+    if (d < 0) return 'atras';
+    if (d <= 2 && o.etapa < 5) return 'risco';
+    return 'prazo';
+  }
+  function badge(o){
+    const s = situacao(o), d = dif(o);
+    if (s === 'concl'){ const a = atrasoDias(o); return a ? `<span class="badge concl">Concluída · ${a} d de atraso</span>` : '<span class="badge concl">Concluída no prazo</span>'; }
+    if (s === 'atras') return `<span class="badge atras">Atrasada ${-d} d</span>`;
+    if (s === 'risco') return `<span class="badge risco">${d === 0 ? 'Vence hoje' : 'Em risco · ' + d + ' d'}</span>`;
+    return `<span class="badge prazo">Em ${d} d</span>`;
+  }
+  function progresso(o){
+    let h = '<div class="prog">';
+    ETAPAS.forEach((e,k) => {
+      const c = k < o.etapa ? 'f' : (k === o.etapa ? 'a' : '');
+      h += `<b class="${c}" title="${e.nome}"></b>`;
+    });
+    return h + '</div>';
+  }
+
+  const fBusca = document.getElementById('fBusca'), fCliente = document.getElementById('fCliente'),
+        fProduto = document.getElementById('fProduto'), fSit = document.getElementById('fSit'),
+        fGrupo = document.getElementById('fGrupo');
+  function preencherSelects(){
+    const cli = [...new Set(OPS.map(o => o.cliente))].sort();
+    const pro = [...new Set(OPS.map(o => o.produto))].sort();
+    fCliente.innerHTML = '<option value="">Todos</option>' + cli.map(c => `<option>${c}</option>`).join('');
+    fProduto.innerHTML = '<option value="">Todos</option>' + pro.map(c => `<option>${c}</option>`).join('');
+  }
+  preencherSelects();
+  [fBusca,fCliente,fProduto,fSit,fGrupo].forEach(el => el.addEventListener('input', renderDash));
+  document.getElementById('fLimpar').addEventListener('click', () => {
+    fBusca.value=''; fCliente.value=''; fProduto.value=''; fSit.value=''; fGrupo.value='ordem'; renderDash();
+  });
+
+  const expandidos = new Set();
+
+  function filtradas(){
+    const q = fBusca.value.trim().toLowerCase();
+    return OPS.filter(o =>
+      (!fCliente.value || o.cliente === fCliente.value) &&
+      (!fProduto.value || o.produto === fProduto.value) &&
+      (!fSit.value || situacao(o) === fSit.value) &&
+      (!q || (o.op + ' ' + o.cliente + ' ' + o.produto).toLowerCase().includes(q))
+    );
+  }
+
+  function renderDash(){
+    document.getElementById('dHoje').innerHTML = 'Hoje: <b>' + fmtData(new Date()) + '</b><br>Meta: 550 pares/dia';
+    const lista = filtradas();
+    const abertas = lista.filter(o => o.etapa < 7);
+    const atras = lista.filter(o => situacao(o) === 'atras');
+    const sete = abertas.filter(o => dif(o) >= 0 && dif(o) <= 7);
+    const pares = a => a.reduce((s,o) => s + o.pares, 0);
+    const avanco = abertas.length ? Math.round(abertas.reduce((s,o) => s + o.etapa/7, 0) / abertas.length * 100) : 0;
+
+    const fechadas = lista.filter(o => o.etapa >= 7);
+    const pmReal = media(fechadas, diasProd), pmPlan = media(fechadas, planejado);
+    const difPm = (pmReal !== null) ? pmReal - pmPlan : 0;
+    const pmSub = pmReal === null ? 'sem OPs concluídas neste filtro'
+      : `planejado ${d1(pmPlan)} d · ${difPm > 0.05 ? '▲ ' + d1(difPm) + ' d acima' : (difPm < -0.05 ? '▼ ' + d1(-difPm) + ' d abaixo' : 'dentro do planejado')} · ${fechadas.length} OPs`;
+    const idadeAb = media(abertas, diasProd);
+
+    document.getElementById('kpis').innerHTML = `
+      <div class="glass kpi"><div class="l">Prazo médio de produção</div><div class="v">${d1(pmReal)}${pmReal === null ? '' : ' d'}</div><div class="s">${pmSub}</div></div>
+      <div class="glass kpi"><div class="l">Idade média das abertas</div><div class="v">${d1(idadeAb)}${idadeAb === null ? '' : ' d'}</div><div class="s">dias desde a entrada, até hoje</div></div>
+      <div class="glass kpi"><div class="l">OPs em aberto</div><div class="v">${nf(abertas.length)}</div><div class="s">${nf(lista.length - abertas.length)} concluídas no período</div></div>
+      <div class="glass kpi"><div class="l">Pares em produção</div><div class="v">${nf(pares(abertas))}</div><div class="s">${(pares(abertas)/550).toLocaleString('pt-BR',{maximumFractionDigits:1})} dias de meta</div></div>
+      <div class="glass kpi alerta"><div class="l">Atrasadas</div><div class="v">${nf(atras.length)}</div><div class="s">${nf(pares(atras))} pares fora do prazo</div></div>
+      <div class="glass kpi alerta"><div class="l">Atraso médio</div><div class="v">${atras.length ? (atras.reduce((s,o)=>s+atrasoDias(o),0)/atras.length).toLocaleString('pt-BR',{maximumFractionDigits:1}) : '0'} d</div><div class="s">maior: ${atras.length ? Math.max(...atras.map(atrasoDias)) : 0} d · vs previsão inicial</div></div>
+      <div class="glass kpi"><div class="l">Entregam em 7 dias</div><div class="v">${nf(sete.length)}</div><div class="s">${nf(pares(sete))} pares</div></div>
+      <div class="glass kpi"><div class="l">Avanço médio</div><div class="v">${avanco}%</div><div class="s">das 7 etapas, nas OPs abertas</div></div>`;
+
+    // fluxo por etapa
+    const porEtapa = ETAPAS.map((e,k) => abertas.filter(o => o.etapa === k));
+    const concl = lista.filter(o => o.etapa >= 7);
+    const maxP = Math.max(1, ...porEtapa.map(pares), pares(concl));
+    let fh = '';
+    porEtapa.forEach((a,k) => {
+      fh += `<div class="fcol"><div class="fbar-wrap"><div class="fbar" style="height:${Math.max(4, pares(a)/maxP*90)}px"></div></div>
+        <div class="n">${nf(pares(a))}</div><div class="p">${a.length} OP${a.length===1?'':'s'}</div><div class="nm">${ETAPAS[k].nome}</div></div>`;
+    });
+    fh += `<div class="fcol fim"><div class="fbar-wrap"><div class="fbar" style="height:${Math.max(4, pares(concl)/maxP*90)}px"></div></div>
+        <div class="n">${nf(pares(concl))}</div><div class="p">${concl.length} OP${concl.length===1?'':'s'}</div><div class="nm">Concluídas</div></div>`;
+    document.getElementById('flow').innerHTML = fh;
+
+    // tabela
+    const g = fGrupo.value;
+    const tb = document.getElementById('tabela');
+    document.getElementById('tabCont').textContent = nf(lista.length) + ' OPs · ' + nf(pares(lista)) + ' pares';
+    if (g === 'ordem'){
+      document.getElementById('tabTitulo').textContent = 'Ordens de produção';
+      const ord = [...lista].sort((a,b) => (b.etapa<7 ? atrasoDias(b) : 0) - (a.etapa<7 ? atrasoDias(a) : 0) || a.previsaoInicial - b.previsaoInicial);
+      let h = `<thead><tr><th>OP</th><th>Cliente</th><th>Produto</th><th class="num">Pares</th><th>Entrada</th><th>Previsão inicial</th><th>Previsão atual</th><th>Dias em produção</th><th>Dias em atraso</th><th>Etapa atual</th><th>Progresso</th><th>Situação</th></tr></thead><tbody>`;
+      ord.forEach(o => {
+        const at = atrasoDias(o), rp = Math.round((o.previsao - o.previsaoInicial)/DIA), dp = diasProd(o), pl = planejado(o);
+        const late = at > 0 && o.etapa < 7;
+        const key = o.op + '-' + o.caixa;
+        h += `<tr class="lin${late ? ' late' : ''}" data-k="${key}"><td><span class="op">OP ${o.op}</span> <span class="cx">cx ${o.caixa}</span></td>
+          <td>${o.cliente}</td><td>${o.produto}</td><td class="num">${o.pares}</td>
+          <td>${fmtData(o.entrada)}</td><td>${fmtData(o.previsaoInicial)}</td>
+          <td><b>${fmtData(o.previsao)}</b>${rp ? `<span class="reprog">reprogramada +${rp} d</span>` : ''}</td>
+          <td class="dprod${dp > pl ? ' over' : ''}"><b>${dp} d</b><small>${o.etapa >= 7 ? 'real' : 'até hoje'} · plan. ${pl} d${dp > pl ? ' ▲' : ''}</small></td>
+          <td>${at ? `<span class="atr${o.etapa >= 7 ? ' fim' : ''}">${o.etapa >= 7 ? at + ' d (fechou)' : '▲ ' + at + ' d'}</span>` : '<span class="atr ok">—</span>'}</td>
+          <td>${o.etapa >= 7 ? 'Expedida' : ETAPAS[o.etapa].nome}</td><td>${progresso(o)}</td><td>${badge(o)}</td></tr>`;
+        if (expandidos.has(key)){
+          let lt = '<div class="linha-tempo">';
+          ETAPAS.forEach((e,k) => {
+            const ev = o.eventos.find(x => x.sig === e.sig);
+            const c = ev ? 'f' : (k === o.etapa ? 'a' : '');
+            lt += `<div class="lt ${c}"><div class="t">${e.nome}</div><div class="h">${ev ? fmtHora(ev.ts) : (k === o.etapa ? 'em andamento / aguardando' : 'pendente')}</div></div>`;
+          });
+          h += `<tr class="det"><td colspan="12">${lt}</div></td></tr>`;
+        }
+      });
+      if (!ord.length) h += '<tr><td colspan="12" style="text-align:center;color:var(--beige)">Nenhuma OP com esses filtros</td></tr>';
+      tb.innerHTML = h + '</tbody>';
+      tb.querySelectorAll('tr.lin').forEach(tr => tr.addEventListener('click', () => {
+        const k = tr.dataset.k; expandidos.has(k) ? expandidos.delete(k) : expandidos.add(k); renderDash();
+      }));
+    } else {
+      document.getElementById('tabTitulo').textContent = g === 'cliente' ? 'Por cliente' : 'Por produto';
+      const mapa = new Map();
+      lista.forEach(o => { const k = g === 'cliente' ? o.cliente : o.produto; if (!mapa.has(k)) mapa.set(k, []); mapa.get(k).push(o); });
+      const linhas = [...mapa.entries()].map(([k, a]) => {
+        const ab = a.filter(o => o.etapa < 7);
+        const prox = ab.length ? new Date(Math.min(...ab.map(o => o.previsaoInicial))) : null;
+        const dpm = ab.length ? Math.round(ab.reduce((s,o) => s + diasProd(o), 0)/ab.length) : 0;
+        const fe = a.filter(o => o.etapa >= 7);
+        const pmr = media(fe, diasProd), pmp = media(fe, planejado);
+        const maxAt = ab.length ? Math.max(...ab.map(atrasoDias)) : 0;
+        const av = ab.length ? Math.round(ab.reduce((s,o) => s + o.etapa/7, 0)/ab.length*100) : 100;
+        return { pmr, pmp, dpm, maxAt, k, ops:a.length, ab:ab.length, pares:pares(a), av, prox, atras:a.filter(o => situacao(o)==='atras').length,
+                 entrada: new Date(Math.min(...a.map(o => o.entrada))) };
+      }).sort((x,y) => y.atras - x.atras || y.pares - x.pares);
+      let h = `<thead><tr><th>${g === 'cliente' ? 'Cliente' : 'Produto'}</th><th class="num">OPs</th><th class="num">Em aberto</th><th class="num">Pares</th><th>Entrada mais antiga</th><th>Próxima entrega (inicial)</th><th>Avanço médio</th><th>Idade média (abertas)</th><th>Prazo médio (concluídas)</th><th>Maior atraso</th><th>Atrasadas</th></tr></thead><tbody>`;
+      linhas.forEach(l => {
+        h += `<tr><td><b>${l.k}</b></td><td class="num">${l.ops}</td><td class="num">${l.ab}</td><td class="num">${nf(l.pares)}</td>
+          <td>${fmtData(l.entrada)}</td><td><b>${l.prox ? fmtData(l.prox) : '—'}</b></td>
+          <td><div class="prog" style="min-width:120px"><b class="f" style="flex:${l.av}"></b><b style="flex:${100-l.av}"></b></div> <span class="cx">${l.av}%</span></td>
+          <td>${l.dpm} d</td>
+          <td>${l.pmr === null ? '—' : `<b>${d1(l.pmr)} d</b> <span class="cx">plan. ${d1(l.pmp)} d${l.pmr > l.pmp + 0.05 ? ' ▲' : ''}</span>`}</td>
+          <td>${l.maxAt ? `<span class="atr">▲ ${l.maxAt} d</span>` : '<span class="atr ok">—</span>'}</td>
+          <td>${l.atras ? `<span class="badge atras">${l.atras} atrasada${l.atras>1?'s':''}</span>` : '<span class="badge prazo">0</span>'}</td></tr>`;
+      });
+      if (!linhas.length) h += '<tr><td colspan="11" style="text-align:center;color:var(--beige)">Nenhuma OP com esses filtros</td></tr>';
+      tb.innerHTML = h + '</tbody>';
+    }
+  }
+
+  // abre direto no acompanhamento se o link tiver #acompanhamento
+  if (location.hash === '#acompanhamento') irPara('dash');
+</script>
+</body>
+</html>
