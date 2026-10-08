@@ -1,0 +1,15 @@
+:root{
+  --navy:#1C2632; --blue:#2C3B4E; --terra:#9F5234; --yellow:#FEC761; --beige:#CCC1A9; --warm:#FFFCF4;
+  --font:'DM Sans',system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{font-family:var(--font);}
+.chave-bg{position:fixed;inset:0;background:rgba(13,17,23,.92);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;}
+.chave-box{background:var(--navy);color:var(--warm);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:26px;width:min(420px,100%);display:flex;flex-direction:column;gap:12px;}
+.chave-box h2{margin:0;color:var(--yellow);} .chave-box p{margin:0;color:var(--beige);font-size:.9rem;}
+.chave-box input{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:var(--warm);font:600 1rem var(--font);}
+.chave-box button{padding:12px;border:0;border-radius:10px;background:var(--yellow);color:var(--navy);font:700 1rem var(--font);cursor:pointer;}
+.menu{display:flex;gap:6px;align-items:center;}
+.menu a{padding:7px 16px;border-radius:100px;border:1px solid rgba(255,255,255,.2);color:var(--beige);text-decoration:none;font:600 .78rem var(--font);letter-spacing:.3px;}
+.menu a.on{background:var(--yellow);color:var(--navy);border-color:var(--yellow);}

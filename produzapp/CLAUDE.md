@@ -40,7 +40,14 @@ estoque/fiscal/pedidos de venda e o **Odoo** com o cadastro (produto, lista de m
   Validado localmente: gravar → reiniciar → dado persiste; leitura repetida (`idLeitura`) devolve o mesmo resultado.
 - ❌ Não existe ainda: telas ligadas à API, conectores reais, deploy de fato, **cron da fila de sincronização na Vercel**
   (o `setInterval` só vale no servidor tradicional; serverless precisa de Vercel Cron chamando um endpoint).
-- `web/prototipo/estacao-de-baixa.html`: protótipo navegável, **dados simulados no navegador**, não grava em lugar nenhum.
+- ✅ **MVP (08/10/2026): telas reais ligadas à API**, servidas pelo próprio Fastify (`web/`):
+  `estacao.html` (bipe → `POST /leituras`, com **fila offline no navegador**: sem rede grava local e reenvia com a hora real do bipe, `lidoEm`),
+  `painel.html` (acompanhamento ao vivo, atualiza a cada 15 s), `ops.html` (cria OPs por total de pares → caixas, imprime **fichas A6 com Code128**
+  — conferidas com leitor zbar — e códigos PARADA/RETOMA). A chave de API é digitada uma vez por navegador. `Dockerfile` + `docker-compose.yml` prontos para a VPS.
+  Verificado em navegador (Playwright): criar OP → bipar → painel → queda de rede → reenvio.
+- ⚠ **Fuso:** datas de calendário são tratadas em UTC (`new Date('2026-10-16')`); rode com `TZ=UTC`. Perto da meia-noite de Brasília
+  (21h–00h) o "hoje" do servidor já é o dia seguinte e o atraso muda 3 h antes. Corrigir antes do piloto (parsear datas em America/Sao_Paulo).
+- `web/prototipo/estacao-de-baixa.html`: protótipo antigo, **dados simulados no navegador**, não grava em lugar nenhum (referência visual).
   - Aba **Estação**: seletor obrigatório de etapa, tela antiburro (cor inteira piscando verde/vermelho/amarelo + som),
     foco permanente, detecção de leitura colada, recusa de setor errado e de etapa fora de ordem, histórico.
   - Aba **Acompanhamento** (visual "Vidro Prado"): indicadores (prazo médio de produção, idade média das abertas,
@@ -64,7 +71,7 @@ estoque/fiscal/pedidos de venda e o **Odoo** com o cadastro (produto, lista de m
    *Decisão pendente com o Wesley:* Neon pelo Marketplace da Vercel (rápido, só para piloto sem dado real de cliente)
    **ou** PostgreSQL na VPS da empresa.
 2. ~~**Vercel-ready:**~~ **feito, ainda não publicado.** Antes: função da API em `api/` + `vercel.json`; estação e painel como estáticos servidos pelo mesmo projeto.
-3. **Telas ligadas à API:** `POST /leituras` com `idLeitura` único e **fila local no navegador** se a rede cair;
+3. ~~**Telas ligadas à API:**~~ **feito (MVP).** Antes: `POST /leituras` com `idLeitura` único e **fila local no navegador** se a rede cair;
    painel usando `GET /ordens` e `GET /indicadores`. A chave de API **não** vai no código: cada estação a digita uma vez
    e o navegador a guarda localmente (ou usar login simples na fase seguinte).
 4. **Criação de OPs em lote por plano** (`POST /ordens/lote`) — uma OP por caixa pesa no PCP; medir no piloto.

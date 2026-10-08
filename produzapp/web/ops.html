@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPs e fichas · Prado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comum.css">
+<style>
+  body{ background:var(--navy); color:var(--warm); overflow:auto; height:auto; min-height:100%; }
+  nav.topo{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 20px; border-bottom:1px solid rgba(255,255,255,.12); }
+  .marca{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:.95rem; }
+  .marca .p{ width:30px; height:30px; border-radius:8px; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .wrap{ max-width:1100px; margin:0 auto; padding:22px 20px 60px; display:grid; gap:16px; }
+  h1{ margin:0; font-size:1.6rem; color:var(--yellow); } h2{ margin:0 0 12px; font-size:.8rem; letter-spacing:1px; text-transform:uppercase; color:var(--beige); }
+  .glass{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius:16px; padding:16px 18px; }
+  form.grade{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; align-items:end; }
+  label{ display:flex; flex-direction:column; gap:4px; font-size:.68rem; color:var(--beige); text-transform:uppercase; letter-spacing:1px; }
+  input,select{ background:rgba(255,255,255,.09); color:var(--warm); border:1px solid rgba(255,255,255,.2); border-radius:10px; padding:10px 12px; font:500 .95rem var(--font); outline:none; }
+  option{ color:#1C2632; }
+  button.primario{ padding:11px 18px; border:0; border-radius:10px; background:var(--yellow); color:var(--navy); font:700 .95rem var(--font); cursor:pointer; }
+  button.sec{ padding:7px 12px; border:1px solid rgba(255,255,255,.3); border-radius:8px; background:transparent; color:var(--beige); font:600 .78rem var(--font); cursor:pointer; }
+  .aviso{ margin-top:10px; font-size:.85rem; } .aviso.ok{ color:var(--yellow); } .aviso.err{ color:#ffb199; }
+  table{ width:100%; border-collapse:collapse; } th{ text-align:left; font-size:.64rem; letter-spacing:1px; text-transform:uppercase; color:var(--beige); padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.14); }
+  td{ padding:9px 10px; font-size:.85rem; border-bottom:1px solid rgba(255,255,255,.07); }
+  .barra-sec{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+
+  /* ---- fichas A6 (só aparecem ao imprimir) ---- */
+  #fichas{ display:none; }
+  .ficha{ width:105mm; height:148mm; padding:6mm; box-sizing:border-box; background:#fff; color:#000; page-break-after:always; break-after:page; font-family:Arial,sans-serif; display:flex; flex-direction:column; }
+  .ficha .topo{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:.6mm solid #000; padding-bottom:2mm; }
+  .ficha .opn{ font-size:9mm; font-weight:800; line-height:1; } .ficha .cx{ font-size:5mm; font-weight:700; text-align:right; }
+  .ficha .info{ font-size:3.2mm; line-height:1.35; margin:2mm 0; } .ficha .info b{ font-size:3.6mm; }
+  .ficha .etapa{ display:flex; align-items:center; gap:2mm; margin-top:1.2mm; }
+  .ficha .etapa .nome{ width:23mm; font-size:3mm; font-weight:700; line-height:1.1; } .ficha .etapa .nome small{ display:block; font-weight:400; font-size:2.4mm; font-family:monospace; }
+  .ficha .etapa svg{ flex:1; height:11mm; width:auto; max-width:70mm; }
+  .ficha .rodape{ margin-top:auto; font-size:2.4mm; color:#444; }
+  .paradas .ficha{ height:auto; page-break-after:auto; }
+  @page{ size:A6; margin:0; }
+  @media print{
+    body{ background:#fff; } body > :not(#fichas){ display:none !important; } #fichas{ display:block; }
+  }
+</style>
+</head>
+<body>
+  <nav class="topo">
+    <div class="marca"><div class="p">P</div><span>OPs e fichas</span></div>
+    <div class="menu"><a href="estacao.html">Estação</a><a href="painel.html">Acompanhamento</a><a class="on" href="ops.html">OPs e fichas</a></div>
+  </nav>
+  <div class="wrap">
+    <div><h1>Criar OPs e imprimir fichas</h1>
+      <div style="color:var(--beige);font-size:.9rem;margin-top:4px">Uma OP por caixa (10 a 20 pares). A previsão inicial é o compromisso com o cliente e não pode ser alterada depois.</div></div>
+
+    <div class="glass">
+      <h2>Nova OP</h2>
+      <form class="grade" id="form">
+        <label>Nº da OP<input id="op" inputmode="numeric" pattern="\d{1,5}" required placeholder="ex.: 101"></label>
+        <label>Cliente<input id="cliente" list="lcli" required></label>
+        <label>Produto<input id="produto" list="lpro" required placeholder="ex.: 40501 · Bota elástica ECO PVC"></label>
+        <label>Total de pares<input id="total" type="number" min="1" required value="100"></label>
+        <label>Pares por caixa<input id="porCaixa" type="number" min="1" max="20" required value="20"></label>
+        <label>Entrada<input id="entrada" type="date" required></label>
+        <label>Previsão inicial<input id="previsao" type="date" required></label>
+        <label>Plano (opcional)<input id="plano"></label>
+        <button class="primario" id="criar">Criar caixas</button>
+      </form>
+      <datalist id="lcli"></datalist><datalist id="lpro"></datalist>
+      <div class="aviso" id="aviso"></div>
+    </div>
+
+    <div class="glass">
+      <h2>Códigos de parada e retomada</h2>
+      <div class="barra-sec">
+        <label>Etapa<select id="pEtapa"></select></label>
+        <label>Motivo<input id="pMotivo" placeholder="ex.: FALTA MATERIAL"></label>
+        <button class="sec" id="pImprimir">Imprimir PARADA + RETOMA</button>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h2>OPs cadastradas</h2>
+      <table><thead><tr><th>OP</th><th>Cliente</th><th>Produto</th><th>Caixas</th><th>Pares</th><th>Previsão inicial</th><th></th></tr></thead><tbody id="lista"></tbody></table>
+    </div>
+  </div>
+  <div id="fichas"></div>
+
+<script src="comum.js"></script><script src="code128.js"></script>
+<script>
+(async () => {
+  const { ETAPAS, api, garantirChave, fmtData, esc } = Prado;
+  await garantirChave();
+  const $ = (id) => document.getElementById(id);
+  let ORDENS = [];
+  $('entrada').value = new Date().toISOString().slice(0, 10);
+  $('pEtapa').innerHTML = ETAPAS.map((e) => `<option value="${e.sig}">${e.nome} (${e.sig})</option>`).join('');
+
+  async function carregar() {
+    try { ORDENS = await api('/ordens'); } catch (e) { $('aviso').className = 'aviso err'; $('aviso').textContent = e.message; return; }
+    $('lcli').innerHTML = [...new Set(ORDENS.map((o) => o.cliente))].map((c) => `<option value="${esc(c)}">`).join('');
+    $('lpro').innerHTML = [...new Set(ORDENS.map((o) => o.produto))].map((c) => `<option value="${esc(c)}">`).join('');
+    const porOp = new Map(); ORDENS.forEach((o) => (porOp.get(o.op) || porOp.set(o.op, []).get(o.op)).push(o));
+    $('lista').innerHTML = [...porOp.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([op, cx]) =>
+      `<tr><td><b>${op}</b></td><td>${esc(cx[0].cliente)}</td><td>${esc(cx[0].produto)}</td><td>${cx.length}</td><td>${cx.reduce((s, o) => s + o.pares, 0)}</td>
+       <td>${fmtData(cx[0].previsaoInicial)}</td><td><button class="sec" data-op="${op}">Imprimir fichas</button></td></tr>`).join('')
+      || '<tr><td colspan="7" style="color:var(--beige);padding:18px">Nenhuma OP ainda.</td></tr>';
+    document.querySelectorAll('button[data-op]').forEach((b) => b.addEventListener('click', () =>
+      imprimir(ORDENS.filter((o) => o.op === b.dataset.op).sort((a, c) => a.caixa.localeCompare(c.caixa)))));
+  }
+
+  $('form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const av = $('aviso'); av.className = 'aviso'; av.textContent = 'Criando…';
+    const total = +$('total').value, por = +$('porCaixa').value;
+    if ($('previsao').value < $('entrada').value) { av.className = 'aviso err'; av.textContent = 'A previsão inicial não pode ser antes da entrada.'; return; }
+    const caixas = []; for (let r = total, n = 1; r > 0; n++, r -= por) caixas.push({ n, pares: Math.min(por, r) });
+    const criadas = []; let falha = '';
+    for (const c of caixas) {
+      try {
+        criadas.push(await api('/ordens', { method: 'POST', body: { op: $('op').value, caixa: String(c.n), cliente: $('cliente').value.trim(),
+          produto: $('produto').value.trim(), pares: c.pares, entrada: $('entrada').value, previsaoInicial: $('previsao').value, plano: $('plano').value.trim() || undefined } }));
+      } catch (e) { falha = `Caixa ${c.n}: ${e.message}`; break; }
+    }
+    await carregar();
+    if (falha) { av.className = 'aviso err'; av.textContent = `${criadas.length} caixa(s) criada(s). ${falha}`; return; }
+    av.className = 'aviso ok'; av.textContent = `OP ${criadas[0].op}: ${criadas.length} caixa(s) criada(s). Imprimindo as fichas…`;
+    imprimir(criadas);
+  });
+
+  function fichaHtml(o) {
+    const linhas = ETAPAS.map((e) => { const cod = `${o.op}-${o.caixa}-${e.sig}`;
+      return `<div class="etapa"><div class="nome">${e.nome}<small>${cod}</small></div>${Code128.svg(cod, { mod: 2, alt: 50 })}</div>`; }).join('');
+    return `<div class="ficha"><div class="topo"><div class="opn">OP ${o.op}</div><div class="cx">CAIXA ${o.caixa}<br>${o.pares} pares</div></div>
+      <div class="info"><b>${esc(o.produto)}</b><br>Cliente: ${esc(o.cliente)}<br>Entrada: ${fmtData(o.entrada)} · Previsão: <b>${fmtData(o.previsaoInicial)}</b>${o.plano ? '<br>Plano: ' + esc(o.plano) : ''}</div>
+      ${linhas}<div class="rodape">Passe o leitor na linha da etapa concluída. Grupo Prado · produzapp</div></div>`;
+  }
+  function imprimir(lista) { if (!lista.length) return; $('fichas').innerHTML = lista.map(fichaHtml).join(''); window.print(); }
+
+  $('pImprimir').addEventListener('click', () => {
+    const sig = $('pEtapa').value, nome = ETAPAS.find((e) => e.sig === sig).nome;
+    const motivo = $('pMotivo').value.trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, '-');
+    if (!motivo) { $('pMotivo').focus(); return; }
+    const card = (titulo, cod) => `<div class="ficha"><div class="topo"><div class="opn" style="font-size:6mm">${titulo}</div><div class="cx">${nome}</div></div>
+      <div style="margin-top:8mm;text-align:center">${Code128.svg(cod, { mod: 2, alt: 70 })}<div style="font:700 4mm monospace;margin-top:2mm">${cod}</div></div></div>`;
+    $('fichas').innerHTML = card('PARADA · ' + motivo.replaceAll('-', ' '), `PARADA-${sig}-${motivo}`) + card('RETOMA', `RETOMA-${sig}`);
+    window.print();
+  });
+  carregar();
+})();
+</script>
+</body>
+</html>

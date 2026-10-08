@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acompanhamento da Produção · Prado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comum.css">
+<style>
+  body{ background:var(--navy); color:var(--warm); display:flex; flex-direction:column; overflow:hidden; }
+  nav.topo{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 20px; border-bottom:1px solid rgba(255,255,255,.12); background:rgba(28,38,50,.55); backdrop-filter:blur(12px); flex-shrink:0; position:relative; z-index:3; }
+  .marca{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:.95rem; }
+  .marca .p{ width:30px; height:30px; border-radius:8px; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .selo{ font-size:.66rem; color:var(--beige); letter-spacing:.5px; text-align:right; }
+  .erro-faixa{ display:none; background:var(--terra); color:#fff; padding:8px 16px; font-size:.85rem; text-align:center; position:relative; z-index:3; }
+  .vazio{ padding:30px; text-align:center; color:var(--beige); }
+  .fcol .p{ font-size:.66rem; color:var(--beige); }
+  .flow-grid{ grid-template-columns:repeat(8,1fr); }
+  /* ================= ACOMPANHAMENTO (Vidro Prado) ================= */
+  .bg-deco{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  
+  .bg-deco i{ position:absolute; border-radius:50%; filter:blur(100px); }
+  .bg-deco .a{ width:480px; height:480px; background:var(--terra); opacity:.5; top:-140px; left:-120px; }
+  .bg-deco .b{ width:420px; height:420px; background:var(--yellow); opacity:.18; bottom:-160px; right:-100px; }
+  .bg-deco .c{ width:560px; height:560px; background:var(--blue); opacity:.9; top:25%; left:38%; }
+
+  #viewDash{ flex:1; min-height:0; overflow-y:auto; position:relative; z-index:2; }
+    .d-wrap{ max-width:1280px; margin:0 auto; padding:22px 20px 40px; }
+  .d-head{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .d-head h1{ margin:0; font-size:1.7rem; font-weight:700; color:var(--yellow); }
+  .d-head .sub{ color:var(--beige); font-size:.85rem; margin-top:4px; }
+  .d-head .hoje{ color:var(--beige); font-size:.85rem; text-align:right; }
+  .glass{
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-radius:16px;
+  }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:14px; }
+  .kpi{ padding:14px 16px; }
+  .kpi .l{ font-size:.66rem; font-weight:500; text-transform:uppercase; letter-spacing:1px; color:var(--beige); }
+  .kpi .v{ font-size:2rem; font-weight:700; color:var(--yellow); line-height:1.15; margin-top:4px; font-variant-numeric:tabular-nums; }
+  .kpi .s{ font-size:.75rem; color:var(--beige); margin-top:2px; }
+  .kpi.alerta .v{ color:#fff; }
+  .kpi.alerta{ border-top:3px solid var(--terra); }
+
+  .flow{ padding:16px 18px; margin-bottom:14px; }
+  .flow h3, .tab-head h3{ margin:0 0 12px; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--beige); }
+  .flow-grid{ display:grid; grid-template-columns:repeat(8,1fr); gap:10px; align-items:end; }
+  .fcol{ text-align:center; }
+  .fbar-wrap{ height:90px; display:flex; align-items:flex-end; justify-content:center; }
+  .fbar{ width:70%; max-width:56px; border-radius:8px 8px 3px 3px; background:var(--yellow); min-height:4px; transition:height .4s; }
+  .fcol.fim .fbar{ background:var(--beige); }
+  .fcol .n{ font-weight:700; font-size:1.05rem; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .fcol .p{ font-size:.66rem; color:var(--beige); }
+  .fcol .nm{ font-size:.68rem; font-weight:600; margin-top:3px; line-height:1.2; }
+
+  .filtros{ padding:12px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .filtros input, .filtros select{
+    background:rgba(255,255,255,.09); color:var(--warm); border:1px solid rgba(255,255,255,.2);
+    border-radius:10px; padding:9px 12px; font:500 .85rem var(--font); outline:none; min-width:140px;
+  }
+  .filtros input{ flex:1; min-width:200px; }
+  .filtros input::placeholder{ color:var(--beige); }
+  .filtros option{ color:#1C2632; }
+  .filtros label{ font-size:.66rem; color:var(--beige); text-transform:uppercase; letter-spacing:1px; display:flex; flex-direction:column; gap:4px; }
+  .filtros .limpar{ background:transparent; border:1px solid rgba(255,255,255,.25); color:var(--beige); border-radius:10px; padding:9px 14px; font:600 .8rem var(--font); cursor:pointer; align-self:flex-end; }
+
+  .tabela{ padding:6px 4px 10px; overflow-x:auto; }
+  .tab-head{ padding:12px 14px 0; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; }
+  .tab-head .cont{ font-size:.75rem; color:var(--beige); }
+  table{ width:100%; border-collapse:collapse; min-width:1240px; }
+  th{ text-align:left; font-size:.64rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--beige); padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.14); white-space:nowrap; }
+  td{ padding:10px 12px; font-size:.84rem; border-bottom:1px solid rgba(255,255,255,.07); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  tr.lin{ cursor:pointer; }
+  tr.lin:hover td{ background:rgba(255,255,255,.06); }
+  td .op{ font-weight:700; } td .cx{ color:var(--beige); font-size:.72rem; }
+  td.num{ text-align:right; }
+  .prog{ display:flex; gap:3px; min-width:150px; }
+  .prog b{ flex:1; height:9px; border-radius:3px; background:rgba(255,255,255,.14); }
+  .prog b.f{ background:var(--yellow); } .prog b.a{ background:var(--terra); box-shadow:0 0 0 1px rgba(255,255,255,.35); }
+  .badge{ display:inline-block; font-size:.64rem; font-weight:700; padding:4px 11px; border-radius:100px; letter-spacing:.6px; text-transform:uppercase; }
+  .badge.atras{ background:var(--terra); color:#fff; }
+  .badge.risco{ background:var(--yellow); color:var(--navy); }
+  .badge.prazo{ background:var(--blue); color:var(--beige); border:1px solid rgba(255,255,255,.2); }
+  .badge.concl{ background:transparent; color:var(--yellow); border:1px solid var(--yellow); }
+  tr.det td{ background:rgba(0,0,0,.18); white-space:normal; }
+  .linha-tempo{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; min-width:880px; }
+  .lt{ padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.14); font-size:.72rem; }
+  .lt.f{ border-color:var(--yellow); } .lt.a{ border-color:var(--terra); background:rgba(159,82,52,.25); }
+  .lt .t{ font-weight:700; font-size:.76rem; margin-bottom:2px; } .lt .h{ color:var(--beige); }
+  tr.lin.late td{ background:rgba(159,82,52,.18); }
+  tr.lin.late td:first-child{ box-shadow:inset 4px 0 0 var(--terra); }
+  .atr{ display:inline-block; font-weight:700; background:var(--terra); color:#fff; padding:3px 10px; border-radius:8px; font-size:.84rem; }
+  .atr.ok{ background:transparent; color:var(--beige); font-weight:500; padding:3px 0; }
+  .atr.fim{ background:transparent; color:var(--yellow); border:1px solid var(--yellow); font-size:.74rem; }
+  .reprog{ color:var(--yellow); font-size:.68rem; font-weight:600; display:block; }
+  .dprod b{ font-size:.9rem; } .dprod small{ color:var(--beige); font-size:.68rem; display:block; }
+  .dprod.over b{ color:var(--yellow); }
+  .teste{ margin-top:12px; font-size:.78rem; color:var(--beige); text-align:center; }
+  .teste code{ background:rgba(255,255,255,.12); padding:2px 8px; border-radius:6px; color:var(--yellow); font-weight:700; }
+  .rodape{ margin-top:22px; text-align:center; font-size:.7rem; color:var(--beige); opacity:.8; }
+  @media (max-width:760px){ .flow-grid{ grid-template-columns:repeat(4,1fr); } }
+
+</style>
+</head>
+<body>
+  <div class="bg-deco"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+  <nav class="topo">
+    <div class="marca"><div class="p">P</div><span>Acompanhamento da Produção</span></div>
+    <div class="menu"><a href="estacao.html">Estação</a><a class="on" href="painel.html">Acompanhamento</a><a href="ops.html">OPs e fichas</a></div>
+    <div class="selo" id="selo">carregando…</div>
+  </nav>
+  <div class="erro-faixa" id="erro"></div>
+
+  <div id="viewDash">
+    <div class="d-wrap">
+      <div class="d-head">
+        <div><h1>Acompanhamento da Produção</h1>
+          <div class="sub">Por ordem de produção, cliente e produto · atraso medido contra a previsão inicial</div></div>
+        <div class="hoje" id="dHoje"></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="glass flow"><h3>Onde estão os pares agora (por etapa)</h3><div class="flow-grid" id="flow"></div></div>
+      <div class="glass filtros">
+        <input id="fBusca" type="text" placeholder="Buscar OP, cliente ou produto...">
+        <label>Cliente<select id="fCliente"></select></label>
+        <label>Produto<select id="fProduto"></select></label>
+        <label>Situação<select id="fSit"><option value="">Todas</option><option value="atrasada">Atrasadas</option><option value="em_risco">Em risco</option><option value="no_prazo">No prazo</option><option value="concluida">Concluídas</option></select></label>
+        <label>Agrupar por<select id="fGrupo"><option value="ordem">Ordem de produção</option><option value="cliente">Cliente</option><option value="produto">Produto</option></select></label>
+        <button class="limpar" id="fLimpar">Limpar</button>
+      </div>
+      <div class="glass tabela">
+        <div class="tab-head"><h3 id="tabTitulo">Ordens de produção</h3><div class="cont" id="tabCont"></div></div>
+        <table id="tabela"></table>
+      </div>
+      <div class="rodape">Grupo Prado · Safety Prado · Country Prado · Itanhandu &amp; Guaxupé · atualiza sozinho a cada 15 s</div>
+    </div>
+  </div>
+
+<script src="comum.js"></script>
+<script>
+(async () => {
+  const { ETAPAS, api, garantirChave, fmtData, fmtHora, nf, d1, esc } = Prado;
+  await garantirChave();
+  const N = ETAPAS.length;
+  let ORDENS = [], IND = null;
+  const detalhes = new Map();           // id -> eventos (carregados ao expandir)
+  const expandidos = new Set();
+  const $ = (id) => document.getElementById(id);
+  const fBusca = $('fBusca'), fCliente = $('fCliente'), fProduto = $('fProduto'), fSit = $('fSit'), fGrupo = $('fGrupo');
+
+  const media = (a, f) => a.length ? a.reduce((s, x) => s + f(x), 0) / a.length : null;
+  const aberta = (o) => o.situacao !== 'concluida';
+  const pares = (a) => a.reduce((s, o) => s + o.pares, 0);
+  const diasPara = (o) => Math.round((new Date(o.previsaoInicial) - new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z')) / 86400000);
+
+  function badge(o) {
+    const d = diasPara(o);
+    if (o.situacao === 'concluida') return o.atrasoDias ? `<span class="badge concl">Concluída · ${o.atrasoDias} d de atraso</span>` : '<span class="badge concl">Concluída no prazo</span>';
+    if (o.situacao === 'atrasada') return `<span class="badge atras">Atrasada ${o.atrasoDias} d</span>`;
+    if (o.situacao === 'em_risco') return `<span class="badge risco">${d === 0 ? 'Vence hoje' : 'Em risco · ' + d + ' d'}</span>`;
+    return `<span class="badge prazo">Em ${d} d</span>`;
+  }
+  const progresso = (o) => '<div class="prog">' + ETAPAS.map((e, k) =>
+    `<b class="${k < o.etapasConcluidas ? 'f' : (k === o.etapasConcluidas ? 'a' : '')}" title="${e.nome}"></b>`).join('') + '</div>';
+
+  function preencherSelects() {
+    const manter = (el, lista) => { const v = el.value; el.innerHTML = '<option value="">Todos</option>' + lista.map((c) => `<option>${esc(c)}</option>`).join(''); el.value = lista.includes(v) ? v : ''; };
+    manter(fCliente, [...new Set(ORDENS.map((o) => o.cliente))].sort());
+    manter(fProduto, [...new Set(ORDENS.map((o) => o.produto))].sort());
+  }
+  [fBusca, fCliente, fProduto, fSit, fGrupo].forEach((el) => el.addEventListener('input', render));
+  $('fLimpar').addEventListener('click', () => { fBusca.value = ''; fCliente.value = ''; fProduto.value = ''; fSit.value = ''; fGrupo.value = 'ordem'; render(); });
+
+  function filtradas() {
+    const q = fBusca.value.trim().toLowerCase();
+    return ORDENS.filter((o) => (!fCliente.value || o.cliente === fCliente.value) && (!fProduto.value || o.produto === fProduto.value) &&
+      (!fSit.value || o.situacao === fSit.value) && (!q || (o.op + ' ' + o.cliente + ' ' + o.produto).toLowerCase().includes(q)));
+  }
+
+  function render() {
+    $('dHoje').innerHTML = 'Hoje: <b>' + new Date().toLocaleDateString('pt-BR') + '</b><br>Meta: 550 pares/dia';
+    const lista = filtradas(), abertas = lista.filter(aberta), atras = lista.filter((o) => o.situacao === 'atrasada');
+    const fechadas = lista.filter((o) => !aberta(o));
+    const sete = abertas.filter((o) => { const d = diasPara(o); return d >= 0 && d <= 7; });
+    const avanco = abertas.length ? Math.round(media(abertas, (o) => o.etapasConcluidas / N) * 100) : 0;
+    const pmReal = media(fechadas, (o) => o.diasProducao), pmPlan = media(fechadas, (o) => o.prazoPlanejadoDias);
+    const dif = pmReal === null ? 0 : pmReal - pmPlan;
+    const pmSub = pmReal === null ? 'sem OPs concluídas neste filtro'
+      : `planejado ${d1(pmPlan)} d · ${dif > 0.05 ? '▲ ' + d1(dif) + ' d acima' : (dif < -0.05 ? '▼ ' + d1(-dif) + ' d abaixo' : 'dentro do planejado')} · ${fechadas.length} OPs`;
+    const idade = media(abertas, (o) => o.diasProducao);
+    $('kpis').innerHTML = `
+      <div class="glass kpi"><div class="l">Prazo médio de produção</div><div class="v">${d1(pmReal)}${pmReal === null ? '' : ' d'}</div><div class="s">${pmSub}</div></div>
+      <div class="glass kpi"><div class="l">Idade média das abertas</div><div class="v">${d1(idade)}${idade === null ? '' : ' d'}</div><div class="s">dias desde a entrada, até hoje</div></div>
+      <div class="glass kpi"><div class="l">OPs em aberto</div><div class="v">${nf(abertas.length)}</div><div class="s">${nf(fechadas.length)} concluídas</div></div>
+      <div class="glass kpi"><div class="l">Pares em produção</div><div class="v">${nf(pares(abertas))}</div><div class="s">${d1(pares(abertas) / 550)} dias de meta</div></div>
+      <div class="glass kpi alerta"><div class="l">Atrasadas</div><div class="v">${nf(atras.length)}</div><div class="s">${nf(pares(atras))} pares fora do prazo</div></div>
+      <div class="glass kpi alerta"><div class="l">Atraso médio</div><div class="v">${atras.length ? d1(media(atras, (o) => o.atrasoDias)) : '0'} d</div><div class="s">maior: ${atras.length ? Math.max(...atras.map((o) => o.atrasoDias)) : 0} d · vs previsão inicial</div></div>
+      <div class="glass kpi"><div class="l">Entregam em 7 dias</div><div class="v">${nf(sete.length)}</div><div class="s">${nf(pares(sete))} pares</div></div>
+      <div class="glass kpi"><div class="l">Avanço médio</div><div class="v">${avanco}%</div><div class="s">das 7 etapas, nas OPs abertas</div></div>`;
+
+    const porEtapa = ETAPAS.map((e, k) => abertas.filter((o) => o.etapasConcluidas === k));
+    const maxP = Math.max(1, ...porEtapa.map(pares), pares(fechadas));
+    const col = (cls, a, nome) => `<div class="fcol ${cls}"><div class="fbar-wrap"><div class="fbar" style="height:${Math.max(4, pares(a) / maxP * 90)}px"></div></div>
+      <div class="n">${nf(pares(a))}</div><div class="p">${a.length} OP${a.length === 1 ? '' : 's'}</div><div class="nm">${nome}</div></div>`;
+    $('flow').innerHTML = porEtapa.map((a, k) => col('', a, ETAPAS[k].nome)).join('') + col('fim', fechadas, 'Concluídas');
+
+    const g = fGrupo.value, tb = $('tabela');
+    $('tabCont').textContent = nf(lista.length) + ' OPs · ' + nf(pares(lista)) + ' pares';
+    if (g === 'ordem') tabelaOrdens(tb, lista); else tabelaGrupo(tb, lista, g);
+  }
+
+  function tabelaOrdens(tb, lista) {
+    $('tabTitulo').textContent = 'Ordens de produção';
+    const ord = [...lista].sort((a, b) => (aberta(b) ? b.atrasoDias : 0) - (aberta(a) ? a.atrasoDias : 0) || new Date(a.previsaoInicial) - new Date(b.previsaoInicial));
+    let h = '<thead><tr><th>OP</th><th>Cliente</th><th>Produto</th><th class="num">Pares</th><th>Entrada</th><th>Previsão inicial</th><th>Previsão atual</th><th>Dias em produção</th><th>Dias em atraso</th><th>Etapa atual</th><th>Progresso</th><th>Situação</th></tr></thead><tbody>';
+    ord.forEach((o) => {
+      const late = o.atrasoDias > 0 && aberta(o), dp = o.diasProducao, pl = o.prazoPlanejadoDias;
+      h += `<tr class="lin${late ? ' late' : ''}" data-id="${o.id}"><td><span class="op">OP ${o.op}</span> <span class="cx">cx ${o.caixa}</span></td>
+        <td>${esc(o.cliente)}</td><td>${esc(o.produto)}</td><td class="num">${o.pares}</td>
+        <td>${fmtData(o.entrada)}</td><td>${fmtData(o.previsaoInicial)}</td>
+        <td><b>${fmtData(o.previsaoAtual)}</b>${o.reprogramadaDias ? `<span class="reprog">reprogramada ${o.reprogramadaDias > 0 ? '+' : ''}${o.reprogramadaDias} d</span>` : ''}</td>
+        <td class="dprod${dp > pl ? ' over' : ''}"><b>${dp} d</b><small>${aberta(o) ? 'até hoje' : 'real'} · plan. ${pl} d${dp > pl ? ' ▲' : ''}</small></td>
+        <td>${o.atrasoDias ? `<span class="atr${aberta(o) ? '' : ' fim'}">${aberta(o) ? '▲ ' + o.atrasoDias + ' d' : o.atrasoDias + ' d (fechou)'}</span>` : '<span class="atr ok">—</span>'}</td>
+        <td>${esc(o.etapaAtual)}</td><td>${progresso(o)}</td><td>${badge(o)}</td></tr>`;
+      if (expandidos.has(o.id)) {
+        const ev = detalhes.get(o.id);
+        let lt = '<div class="linha-tempo">';
+        ETAPAS.forEach((e, k) => {
+          const x = ev && ev.find((y) => y.sigla === e.sig);
+          lt += `<div class="lt ${x ? 'f' : (k === o.etapasConcluidas ? 'a' : '')}"><div class="t">${e.nome}</div><div class="h">${!ev ? 'carregando…' : x ? fmtHora(x.em) + (x.operador ? ' · ' + esc(x.operador) : '') : (k === o.etapasConcluidas ? 'em andamento / aguardando' : 'pendente')}</div></div>`;
+        });
+        h += `<tr class="det"><td colspan="12">${lt}</div></td></tr>`;
+      }
+    });
+    if (!ord.length) h += `<tr><td colspan="12" class="vazio">${ORDENS.length ? 'Nenhuma OP com esses filtros' : 'Nenhuma OP cadastrada ainda — crie em “OPs e fichas”.'}</td></tr>`;
+    tb.innerHTML = h + '</tbody>';
+    tb.querySelectorAll('tr.lin').forEach((tr) => tr.addEventListener('click', async () => {
+      const id = tr.dataset.id;
+      if (expandidos.has(id)) expandidos.delete(id); else { expandidos.add(id); render(); await carregarDetalhe(id); }
+      render();
+    }));
+  }
+  async function carregarDetalhe(id) {
+    try { detalhes.set(id, (await api('/ordens/' + id)).eventos); } catch (e) { detalhes.set(id, []); }
+  }
+
+  function tabelaGrupo(tb, lista, g) {
+    $('tabTitulo').textContent = g === 'cliente' ? 'Por cliente' : 'Por produto';
+    const mapa = new Map();
+    lista.forEach((o) => { const k = g === 'cliente' ? o.cliente : o.produto; (mapa.get(k) || mapa.set(k, []).get(k)).push(o); });
+    const linhas = [...mapa.entries()].map(([k, a]) => {
+      const ab = a.filter(aberta), fe = a.filter((o) => !aberta(o));
+      return { k, ops: a.length, ab: ab.length, pares: pares(a), atras: a.filter((o) => o.situacao === 'atrasada').length,
+        prox: ab.length ? new Date(Math.min(...ab.map((o) => new Date(o.previsaoInicial)))) : null,
+        entrada: new Date(Math.min(...a.map((o) => new Date(o.entrada)))),
+        av: ab.length ? Math.round(media(ab, (o) => o.etapasConcluidas / N) * 100) : 100,
+        idade: ab.length ? Math.round(media(ab, (o) => o.diasProducao)) : 0,
+        pmr: media(fe, (o) => o.diasProducao), pmp: media(fe, (o) => o.prazoPlanejadoDias),
+        maxAt: ab.length ? Math.max(...ab.map((o) => o.atrasoDias)) : 0 };
+    }).sort((x, y) => y.atras - x.atras || y.pares - x.pares);
+    let h = `<thead><tr><th>${g === 'cliente' ? 'Cliente' : 'Produto'}</th><th class="num">OPs</th><th class="num">Em aberto</th><th class="num">Pares</th><th>Entrada mais antiga</th><th>Próxima entrega (inicial)</th><th>Avanço médio</th><th>Idade média (abertas)</th><th>Prazo médio (concluídas)</th><th>Maior atraso</th><th>Atrasadas</th></tr></thead><tbody>`;
+    linhas.forEach((l) => {
+      h += `<tr><td><b>${esc(l.k)}</b></td><td class="num">${l.ops}</td><td class="num">${l.ab}</td><td class="num">${nf(l.pares)}</td>
+        <td>${l.entrada.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td><b>${l.prox ? l.prox.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—'}</b></td>
+        <td><div class="prog" style="min-width:120px"><b class="f" style="flex:${l.av}"></b><b style="flex:${100 - l.av}"></b></div> <span class="cx">${l.av}%</span></td>
+        <td>${l.idade} d</td>
+        <td>${l.pmr === null ? '—' : `<b>${d1(l.pmr)} d</b> <span class="cx">plan. ${d1(l.pmp)} d${l.pmr > l.pmp + 0.05 ? ' ▲' : ''}</span>`}</td>
+        <td>${l.maxAt ? `<span class="atr">▲ ${l.maxAt} d</span>` : '<span class="atr ok">—</span>'}</td>
+        <td>${l.atras ? `<span class="badge atras">${l.atras} atrasada${l.atras > 1 ? 's' : ''}</span>` : '<span class="badge prazo">0</span>'}</td></tr>`;
+    });
+    if (!linhas.length) h += '<tr><td colspan="11" class="vazio">Nenhuma OP com esses filtros</td></tr>';
+    tb.innerHTML = h + '</tbody>';
+  }
+
+  async function atualizar() {
+    try {
+      ORDENS = await api('/ordens');
+      preencherSelects();
+      for (const id of expandidos) await carregarDetalhe(id);
+      $('erro').style.display = 'none';
+      $('selo').innerHTML = 'ATUALIZADO ' + new Date().toLocaleTimeString('pt-BR') + '<br>dados reais';
+      render();
+    } catch (e) {
+      $('erro').style.display = 'block';
+      $('erro').textContent = e.status === 401 ? 'Chave recusada — recarregue a página e digite de novo.' : 'Sem conexão com o servidor — mostrando os últimos dados carregados.';
+      if (e.status === 401) setTimeout(() => location.reload(), 1500);
+    }
+  }
+  await atualizar(); setInterval(atualizar, 15000);
+})();
+</script>
+</body>
+</html>

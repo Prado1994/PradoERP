@@ -2,6 +2,7 @@ import { criarServidor } from './api/servidor.js';
 import type { Repositorio } from './repositorio/repositorio.js';
 import { RepositorioMemoria } from './repositorio/memoria.js';
 import { RepositorioPostgres, migrar } from './repositorio/postgres.js';
+import { fileURLToPath } from 'node:url';
 import { carregarDemonstracao } from './seed.js';
 
 /** Escolhe o repositório pelo ambiente: com DATABASE_URL usa PostgreSQL, sem ela usa memória (só desenvolvimento). */
@@ -31,6 +32,7 @@ export async function montarApp(env = process.env) {
   const apiKeys = lerApiKeys(env);
   if (apiKeys.length === 0) throw new Error('Defina API_KEYS (veja .env.example).');
   const repo = await criarRepositorio(env);
-  const app = criarServidor({ repo, apiKeys, config: configDoAmbiente(env) });
+  const app = criarServidor({ repo, apiKeys, config: configDoAmbiente(env),
+    pastaWeb: env.SERVIR_TELAS === '0' ? undefined : fileURLToPath(new URL('../web', import.meta.url)) });
   return { app, repo };
 }

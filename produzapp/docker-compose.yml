@@ -1,0 +1,23 @@
+# Sobe API + telas + PostgreSQL. Uso:  cp .env.example .env  (preencha)  &&  docker compose up -d
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: produzapp
+      POSTGRES_DB: produzapp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes: [dados:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U produzapp"], interval: 5s, retries: 10 }
+    # sem "ports": o banco só é acessível pela API, nunca pela internet
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      DATABASE_URL: postgres://produzapp:${POSTGRES_PASSWORD}@db:5432/produzapp
+      API_KEYS: ${API_KEYS:?defina API_KEYS no .env}
+      PORT: 3000
+    ports: ["3000:3000"]   # no VPS, coloque um proxy HTTPS (Caddy) na frente e troque por "127.0.0.1:3000:3000"
+volumes:
+  dados:

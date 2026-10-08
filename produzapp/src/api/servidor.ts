@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import fastifyStatic from '@fastify/static';
 import { randomUUID } from 'node:crypto';
 import type { Repositorio } from '../repositorio/repositorio.js';
 import type { EventoEtapa, OrdemProducao } from '../dominio/tipos.js';
@@ -15,7 +16,12 @@ export interface OpcoesServidor {
   config?: ConfigLeitura;
   /** Relógio injetável: facilita testes. */
   agora?: () => Date;
+  /** Pasta com as telas (estação, painel). Servidas sem chave; a chave é pedida pelas telas para chamar a API. */
+  pastaWeb?: string;
 }
+
+const ROTAS_API = ['/saude', '/leituras', '/ordens', '/paradas', '/indicadores', '/sincronizacao'];
+const ehRotaApi = (url: string) => ROTAS_API.some((r) => url === r || url.startsWith(r + '/') || url.startsWith(r + '?'));
 
 const data = (v: unknown): Date | undefined => {
   if (typeof v !== 'string' && !(v instanceof Date)) return undefined;
@@ -32,11 +38,14 @@ export function criarServidor(opcoes: OpcoesServidor): FastifyInstance {
   // ---- Autenticação por chave (uma por cliente da API) ----
   app.addHook('onRequest', async (req, reply) => {
     if (req.url === '/saude') return;
+    if (opcoes.pastaWeb && !ehRotaApi(req.url)) return; // arquivos das telas
     const chave = req.headers['x-api-key'];
     if (typeof chave !== 'string' || !apiKeys.includes(chave)) {
       return reply.code(401).send({ erro: 'Chave de API ausente ou inválida.' });
     }
   });
+
+  if (opcoes.pastaWeb) app.register(fastifyStatic, { root: opcoes.pastaWeb });
 
   const visao = async (o: OrdemProducao, eventos?: EventoEtapa[]) => {
     const ev = eventos ?? (await repo.eventosDaOrdem(o.id));
@@ -59,11 +68,16 @@ export function criarServidor(opcoes: OpcoesServidor): FastifyInstance {
     if (typeof b.codigo !== 'string' || typeof b.estacao !== 'string') {
       return reply.code(400).send({ erro: 'Informe "codigo" e "estacao".' });
     }
+    // Leitura feita offline chega depois: "lidoEm" preserva a hora real do bipe (aceita até 7 dias atrás, nunca no futuro).
+    const agoraData = agora();
+    const lido = data(b.lidoEm);
+    const hora = lido && lido.getTime() <= agoraData.getTime() + 60_000 && agoraData.getTime() - lido.getTime() <= 7 * 86_400_000
+      ? lido : agoraData;
     return processarLeitura(repo, {
       codigo: b.codigo, estacao: b.estacao.toUpperCase(),
       idLeitura: typeof b.idLeitura === 'string' ? b.idLeitura : undefined,
       operador: typeof b.operador === 'string' ? b.operador : undefined,
-    }, config, agora());
+    }, config, hora);
   });
 
   // ---- Ordens ----

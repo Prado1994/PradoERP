@@ -69,4 +69,25 @@ describe('API', () => {
     expect(atrasadas).toHaveLength(1);
     expect(atrasadas[0].op).toBe('00102');
   });
+  it('leitura offline preserva a hora do bipe (lidoEm) e recusa hora no futuro', async () => {
+    const { id } = (await criar()).json();
+    const ler = (payload: object) => app.inject({ method: 'POST', url: '/leituras', headers: H, payload });
+    const bipe = '2026-10-08T09:15:00.000Z'; // HOJE = 12:00 local
+    expect((await ler({ codigo: '00101-01-COR', estacao: 'COR', lidoEm: bipe })).json().status).toBe('ok');
+    expect((await ler({ codigo: '00101-01-PES', estacao: 'PES', lidoEm: '2099-01-01T00:00:00Z' })).json().status).toBe('ok');
+    const ev = (await app.inject({ url: `/ordens/${id}`, headers: H })).json().eventos;
+    expect(ev[0].em).toBe(bipe);
+    expect(new Date(ev[1].em).getFullYear()).toBe(2026); // futuro ignorado: usa a hora do servidor
+  });
+
+  it('serve as telas sem chave e mantém a API protegida', async () => {
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const pasta = mkdtempSync(join(tmpdir(), 'web-'));
+    writeFileSync(join(pasta, 'estacao.html'), '<h1>ok</h1>');
+    const a = criarServidor({ repo: new RepositorioMemoria(), apiKeys: ['k'], agora: () => HOJE, pastaWeb: pasta });
+    expect((await a.inject({ url: '/estacao.html' })).statusCode).toBe(200);
+    expect((await a.inject({ url: '/ordens' })).statusCode).toBe(401);
+  });
 });
