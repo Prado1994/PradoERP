@@ -46,7 +46,7 @@
 <body>
   <nav class="topo">
     <div class="marca"><div class="p">P</div><span>OPs e fichas</span></div>
-    <div class="menu"><a href="estacao.html">Estação</a><a href="painel.html">Acompanhamento</a><a class="on" href="ops.html">OPs e fichas</a></div>
+    <div class="menu"><a href="estacao.html">Estação</a><a href="painel.html">Acompanhamento</a><a href="pedidos.html">Pedidos</a><a class="on" href="ops.html">OPs e fichas</a></div>
   </nav>
   <div class="wrap">
     <div><h1>Criar OPs e imprimir fichas</h1>
@@ -145,7 +145,13 @@
     $('fichas').innerHTML = card('PARADA · ' + motivo.replaceAll('-', ' '), `PARADA-${sig}-${motivo}`) + card('RETOMA', `RETOMA-${sig}`);
     window.print();
   });
-  carregar();
+  carregar().then(() => {
+    const m = location.hash.match(/imprimir=([\d,]+)/);
+    if (!m) return;
+    const ops = m[1].split(',').map((x) => x.padStart(5, '0'));
+    const lista = ORDENS.filter((o) => ops.includes(o.op)).sort((a, c) => a.op.localeCompare(c.op) || a.caixa.localeCompare(c.caixa));
+    if (lista.length) { history.replaceState(null, '', 'ops.html'); imprimir(lista); }
+  });
 })();
 </script>
 </body>

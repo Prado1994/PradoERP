@@ -46,7 +46,7 @@
     if (r.status === 401) { guardar(CHAVE, null); throw new ErroApi(401, 'Chave de acesso recusada.'); }
     let json = null;
     try { json = await r.json(); } catch (e) {}
-    if (r.status >= 500) throw new ErroRede('Servidor indisponível.');
+    if (r.status >= 500) throw new ErroRede((json && json.erro) || 'Servidor indisponível.');
     if (!r.ok) throw new ErroApi(r.status, (json && json.erro) || 'Erro ' + r.status);
     return json;
   }

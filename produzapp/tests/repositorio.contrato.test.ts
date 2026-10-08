@@ -6,6 +6,7 @@ import { RepositorioMemoria } from '../src/repositorio/memoria.js';
 import { RepositorioPostgres, migrar } from '../src/repositorio/postgres.js';
 import type { EventoEtapa, ItemFila, Parada } from '../src/dominio/tipos.js';
 import { ordem } from './ajuda.js';
+import type { PedidoEntrada } from '../src/dominio/pedidos.js';
 
 /**
  * Mesma suíte contra a memória e (se DATABASE_URL_TESTE existir) contra o PostgreSQL.
@@ -25,7 +26,7 @@ const fabricas: Fabrica[] = [
       pool ??= new pg.Pool({ connectionString: URL_PG, max: 3 });
       await migrar(pool);
       await pool.query(
-        'TRUNCATE ordens, previsoes, eventos_etapa, leituras, paradas, fila_sincronizacao RESTART IDENTITY CASCADE',
+        'TRUNCATE ordens, previsoes, eventos_etapa, leituras, paradas, fila_sincronizacao, pedidos_entrada, integracao_tokens RESTART IDENTITY CASCADE',
       );
       return new RepositorioPostgres(pool);
     },
@@ -121,6 +122,33 @@ for (const f of fabricas) {
       const lido = (await repo.listarFila()).find((i) => i.id === pronto.id)!;
       expect(lido).toMatchObject({ tentativas: 1, status: 'falha', ultimoErro: 'timeout', payload: { op: '00101', pares: 20 } });
     });
+
+    it('pedidos: guarda itens, programação e vínculo com as OPs; busca por origem', async () => {
+      const p: PedidoEntrada = {
+        id: randomUUID(), origem: 'bling', idExterno: '26944364806', numero: '43', cliente: 'Cliente X', documentoCliente: '00.000.000/0001-00',
+        dataPedido: new Date('2026-09-23T00:00:00Z'), total: 600.5, situacaoExterna: '6',
+        itens: [{ idExterno: '1', produtoIdExterno: '9', descricao: '45501-BOTA Tamanho:40', quantidade: 5 }],
+        status: 'programado', observacaoPcp: 'forma 12', programadoEm: new Date('2026-10-08T12:00:00Z'),
+        programacao: [{ modelo: '45501', op: '00101', caixas: 1, pares: 5, paresPorCaixa: 20, previsaoInicial: new Date('2026-10-20T00:00:00Z') }],
+        alerta: 'Pedido ALTERADO', recebidoEm: new Date('2026-10-08T10:00:00Z'), atualizadoEm: new Date('2026-10-08T12:00:00Z'),
+      };
+      await repo.salvarPedido(p);
+      expect(await repo.buscarPedido(p.id)).toEqual(p);
+      expect(await repo.buscarPedidoPorOrigem('bling', '26944364806')).toEqual(p);
+      expect(await repo.buscarPedidoPorOrigem('bling', 'outro')).toBeUndefined();
+      await repo.salvarPedido({ ...p, status: 'a_programar', alerta: undefined });
+      expect((await repo.listarPedidos())).toHaveLength(1);
+      const o = ordem({ pedidoId: p.id });
+      await repo.salvarOrdem(o);
+      expect((await repo.buscarOrdem(o.id))!.pedidoId).toBe(p.id);
+    });
+
+    it('tokens: grava e substitui (refresh token rotacionado)', async () => {
+      expect(await repo.lerToken('bling')).toBeUndefined();
+      await repo.gravarToken({ nome: 'bling', accessToken: 'a1', refreshToken: 'r1', expiraEm: new Date('2026-10-08T18:00:00Z') });
+      await repo.gravarToken({ nome: 'bling', accessToken: 'a2', refreshToken: 'r2', expiraEm: new Date('2026-10-09T00:00:00Z') });
+      expect(await repo.lerToken('bling')).toEqual({ nome: 'bling', accessToken: 'a2', refreshToken: 'r2', expiraEm: new Date('2026-10-09T00:00:00Z') });
+    });
   });
 }
 
@@ -129,7 +157,7 @@ describe.skipIf(!URL_PG)('PostgreSQL · garantias do esquema', () => {
   let repo: RepositorioPostgres; let p: pg.Pool;
   beforeAll(async () => { p = new pg.Pool({ connectionString: URL_PG, max: 2 }); await migrar(p); });
   beforeEach(async () => {
-    await p.query('TRUNCATE ordens, previsoes, eventos_etapa, leituras, paradas, fila_sincronizacao CASCADE');
+    await p.query('TRUNCATE ordens, previsoes, eventos_etapa, leituras, paradas, fila_sincronizacao, pedidos_entrada, integracao_tokens CASCADE');
     repo = new RepositorioPostgres(p);
   });
   afterAll(async () => { await p.end(); });

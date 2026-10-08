@@ -1,4 +1,5 @@
-import type { EventoEtapa, ItemFila, OrdemProducao, Parada, ResultadoLeitura } from '../dominio/tipos.js';
+import type { EventoEtapa, ItemFila, OrdemProducao, Parada, ResultadoLeitura, TokenIntegracao } from '../dominio/tipos.js';
+import type { PedidoEntrada } from '../dominio/pedidos.js';
 import type { Sigla } from '../dominio/etapas.js';
 
 /**
@@ -33,4 +34,14 @@ export interface Repositorio {
   filaPronta(agora: Date): Promise<ItemFila[]>;
   atualizarItemFila(item: ItemFila): Promise<void>;
   listarFila(): Promise<ItemFila[]>;
+
+  // Caixa de entrada de pedidos
+  salvarPedido(p: PedidoEntrada): Promise<void>;
+  buscarPedido(id: string): Promise<PedidoEntrada | undefined>;
+  buscarPedidoPorOrigem(origem: string, idExterno: string): Promise<PedidoEntrada | undefined>;
+  listarPedidos(): Promise<PedidoEntrada[]>;
+
+  // Credenciais das integrações
+  lerToken(nome: string): Promise<TokenIntegracao | undefined>;
+  gravarToken(t: TokenIntegracao): Promise<void>;
 }

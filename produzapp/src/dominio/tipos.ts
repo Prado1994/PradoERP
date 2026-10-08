@@ -13,6 +13,8 @@ export interface OrdemProducao {
   op: string; // 5 dígitos, ex.: "00101"
   caixa: string; // 2 dígitos, ex.: "01"
   plano?: string;
+  /** Pedido de origem (caixa de entrada) que gerou esta OP. */
+  pedidoId?: string;
   cliente: string;
   produto: string; // ex.: "40501 · Bota elástica ECO PVC"
   pares: number;
@@ -77,4 +79,12 @@ export interface ItemFila {
   proximaTentativa: Date;
   status: 'pendente' | 'enviado' | 'falha';
   ultimoErro?: string;
+}
+
+/** Credenciais de uma integração (ex.: OAuth). O refresh token costuma rotacionar: gravar sempre o novo. */
+export interface TokenIntegracao {
+  nome: string;
+  accessToken: string;
+  refreshToken: string;
+  expiraEm: Date;
 }

@@ -1,5 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
+import type { FontePedidos } from '../integracoes/bling-pedidos.js';
+import { registrarRotasPedidos } from './pedidos.js';
 import { randomUUID } from 'node:crypto';
 import type { Repositorio } from '../repositorio/repositorio.js';
 import type { EventoEtapa, OrdemProducao } from '../dominio/tipos.js';
@@ -18,9 +20,13 @@ export interface OpcoesServidor {
   agora?: () => Date;
   /** Pasta com as telas (estação, painel). Servidas sem chave; a chave é pedida pelas telas para chamar a API. */
   pastaWeb?: string;
+  /** Origem dos pedidos (Bling). Sem ela, a caixa de entrada só mostra o que já foi importado. */
+  fontePedidos?: FontePedidos;
+  /** Segredo para validar os avisos (webhooks) da origem. */
+  segredoWebhook?: string;
 }
 
-const ROTAS_API = ['/saude', '/leituras', '/ordens', '/paradas', '/indicadores', '/sincronizacao'];
+const ROTAS_API = ['/saude', '/leituras', '/ordens', '/paradas', '/indicadores', '/sincronizacao', '/pedidos', '/webhooks'];
 const ehRotaApi = (url: string) => ROTAS_API.some((r) => url === r || url.startsWith(r + '/') || url.startsWith(r + '?'));
 
 const data = (v: unknown): Date | undefined => {
@@ -38,6 +44,7 @@ export function criarServidor(opcoes: OpcoesServidor): FastifyInstance {
   // ---- Autenticação por chave (uma por cliente da API) ----
   app.addHook('onRequest', async (req, reply) => {
     if (req.url === '/saude') return;
+    if (req.url.startsWith('/webhooks/')) return; // autenticado por assinatura, ver api/pedidos.ts
     if (opcoes.pastaWeb && !ehRotaApi(req.url)) return; // arquivos das telas
     const chave = req.headers['x-api-key'];
     if (typeof chave !== 'string' || !apiKeys.includes(chave)) {
@@ -153,6 +160,8 @@ export function criarServidor(opcoes: OpcoesServidor): FastifyInstance {
       enviados: fila.filter((i) => i.status === 'enviado').length,
     };
   });
+
+  registrarRotasPedidos(app, { repo, agora, fonte: opcoes.fontePedidos, segredoWebhook: opcoes.segredoWebhook });
 
   return app;
 }

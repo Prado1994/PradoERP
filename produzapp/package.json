@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "migrar": "tsx scripts/migrar.ts",
-    "test:pg": "vitest run tests/repositorio.contrato.test.ts"
+    "test:pg": "vitest run tests/repositorio.contrato.test.ts",
+    "bling:autorizar": "tsx scripts/bling-autorizar.ts"
   },
   "dependencies": {
     "@fastify/static": "^8.3.0",

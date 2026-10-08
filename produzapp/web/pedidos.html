@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pedidos a programar · Prado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comum.css">
+<style>
+  body{ background:var(--navy); color:var(--warm); overflow:auto; height:auto; min-height:100%; }
+  nav.topo{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 20px; border-bottom:1px solid rgba(255,255,255,.12); flex-wrap:wrap; }
+  .marca{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:.95rem; }
+  .marca .p{ width:30px; height:30px; border-radius:8px; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:22px 20px 60px; display:grid; gap:14px; }
+  h1{ margin:0; font-size:1.6rem; color:var(--yellow); }
+  .sub{ color:var(--beige); font-size:.9rem; margin-top:4px; }
+  .glass{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius:16px; padding:16px 18px; }
+  .topo2{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  .carga{ display:flex; gap:22px; flex-wrap:wrap; }
+  .carga div{ font-size:.66rem; letter-spacing:1px; text-transform:uppercase; color:var(--beige); }
+  .carga b{ display:block; font-size:1.5rem; color:var(--yellow); letter-spacing:0; text-transform:none; margin-top:2px; }
+  .abas{ display:flex; gap:6px; flex-wrap:wrap; }
+  .abas button{ padding:8px 16px; border-radius:100px; border:1px solid rgba(255,255,255,.2); background:transparent; color:var(--beige); font:600 .8rem var(--font); cursor:pointer; }
+  .abas button.on{ background:var(--yellow); color:var(--navy); border-color:var(--yellow); }
+  button.primario{ padding:10px 18px; border:0; border-radius:10px; background:var(--yellow); color:var(--navy); font:700 .9rem var(--font); cursor:pointer; }
+  button.sec{ padding:8px 14px; border:1px solid rgba(255,255,255,.3); border-radius:10px; background:transparent; color:var(--beige); font:600 .8rem var(--font); cursor:pointer; }
+  .msg{ font-size:.85rem; } .msg.ok{ color:var(--yellow); } .msg.err{ color:#ffb199; }
+  .pedido h3{ margin:0; font-size:1.1rem; } .pedido .meta{ color:var(--beige); font-size:.8rem; margin-top:3px; }
+  .cab{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+  .alerta{ background:var(--terra); color:#fff; padding:8px 12px; border-radius:10px; font-size:.82rem; margin:10px 0 0; }
+  table{ width:100%; border-collapse:collapse; margin-top:10px; }
+  th{ text-align:left; font-size:.62rem; letter-spacing:1px; text-transform:uppercase; color:var(--beige); padding:6px 8px; border-bottom:1px solid rgba(255,255,255,.14); }
+  td{ padding:8px; font-size:.84rem; border-bottom:1px solid rgba(255,255,255,.07); vertical-align:top; }
+  .chip{ display:inline-block; background:rgba(255,255,255,.1); border-radius:6px; padding:2px 7px; margin:0 4px 3px 0; font-size:.74rem; font-variant-numeric:tabular-nums; }
+  .tag{ display:inline-block; font-size:.62rem; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:.5px; margin-left:6px; }
+  .tag.aviso{ background:var(--yellow); color:var(--navy); } .tag.erro{ background:var(--terra); color:#fff; } .tag.ok{ border:1px solid var(--yellow); color:var(--yellow); }
+  .prog{ margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,.2); display:none; }
+  .prog.on{ display:block; }
+  .prog input, .prog textarea{ background:rgba(255,255,255,.09); color:var(--warm); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:8px 10px; font:500 .88rem var(--font); outline:none; width:100%; }
+  .prog textarea{ min-height:60px; resize:vertical; }
+  .prog label{ display:block; font-size:.64rem; color:var(--beige); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+  .prog .linha td{ vertical-align:middle; } .prog .res{ color:var(--beige); font-size:.8rem; }
+  .vazio{ text-align:center; color:var(--beige); padding:34px; }
+</style>
+</head>
+<body>
+  <nav class="topo">
+    <div class="marca"><div class="p">P</div><span>Pedidos a programar</span></div>
+    <div class="menu"><a class="on" href="pedidos.html">Pedidos</a><a href="ops.html">OPs e fichas</a><a href="estacao.html">Estação</a><a href="painel.html">Acompanhamento</a></div>
+  </nav>
+  <div class="wrap">
+    <div class="topo2">
+      <div><h1>Caixa de entrada de pedidos</h1>
+        <div class="sub">Pedidos de venda do Bling chegam aqui. O PCP decide quando e como produzir (capacidade, matrizes, formas) e define a previsão inicial.</div></div>
+      <div><button class="primario" id="sync">Sincronizar com o Bling</button><div class="msg" id="syncMsg"></div></div>
+    </div>
+    <div class="glass carga" id="carga"></div>
+    <div class="abas" id="abas"></div>
+    <div id="lista"></div>
+  </div>
+
+<script src="comum.js"></script>
+<script>
+(async () => {
+  const { api, garantirChave, fmtData, nf, esc } = Prado;
+  await garantirChave();
+  const $ = (id) => document.getElementById(id);
+  let PEDIDOS = [], aba = 'a_programar', aberto = null;
+  const ABAS = [['a_programar', 'A programar'], ['programado', 'Programados'], ['cancelado_na_origem', 'Cancelados']];
+
+  async function carga() {
+    try {
+      const i = await api('/indicadores');
+      $('carga').innerHTML = `<div>Em produção agora<b>${nf(i.paresEmProducao)} pares</b></div><div>Equivale a<b>${i.diasDeMeta ?? '—'} dias de meta</b></div>
+        <div>OPs em aberto<b>${nf(i.ordensAbertas)}</b></div><div>Atrasadas<b>${nf(i.atrasadas)}</b></div><div>Entregam em 7 dias<b>${nf(i.entregamEm7Dias)}</b></div>`;
+    } catch (e) { $('carga').innerHTML = ''; }
+  }
+
+  async function carregar() {
+    try { PEDIDOS = await api('/pedidos'); } catch (e) { $('lista').innerHTML = `<div class="glass vazio">${esc(e.message)}</div>`; return; }
+    desenhar();
+  }
+
+  function desenhar() {
+    $('abas').innerHTML = ABAS.map(([k, n]) => `<button class="${k === aba ? 'on' : ''}" data-k="${k}">${n} (${PEDIDOS.filter((p) => p.status === k).length})</button>`).join('');
+    $('abas').querySelectorAll('button').forEach((b) => b.onclick = () => { aba = b.dataset.k; aberto = null; desenhar(); });
+    const lista = PEDIDOS.filter((p) => p.status === aba);
+    $('lista').innerHTML = lista.length ? lista.map(cartao).join('') : `<div class="glass vazio">${aba === 'a_programar' ? 'Nenhum pedido esperando programação.' : 'Nada por aqui.'}</div>`;
+    $('lista').querySelectorAll('[data-prog]').forEach((b) => b.onclick = () => { aberto = aberto === b.dataset.prog ? null : b.dataset.prog; desenhar(); });
+    if (aberto) montarProgramacao(PEDIDOS.find((p) => p.id === aberto));
+  }
+
+  const grade = (g) => Object.keys(g).sort((a, b) => a - b).map((t) => `<span class="chip">${esc(t)}: <b>${g[t]}</b></span>`).join('') || '<span style="color:var(--beige)">—</span>';
+
+  function cartao(p) {
+    const total = p.linhas.reduce((s, l) => s + l.pares, 0);
+    const bloqueado = p.linhas.some((l) => l.semCodigo);
+    let h = `<div class="glass pedido" id="p-${p.id}"><div class="cab"><div><h3>Pedido ${esc(p.numero)} · ${esc(p.cliente)}</h3>
+      <div class="meta">Pedido de ${p.dataPedido ? fmtData(p.dataPedido) : '—'} · recebido ${new Date(p.recebidoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · <b>${nf(total)} pares</b>${p.previsaoExterna ? ' · previsão no Bling: ' + fmtData(p.previsaoExterna) : ''}</div></div>
+      <div>${p.status === 'a_programar' ? `<button class="primario" data-prog="${p.id}" ${bloqueado ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>${aberto === p.id ? 'Fechar' : 'Programar'}</button>` : ''}</div></div>`;
+    if (p.alerta) h += `<div class="alerta">⚠ ${esc(p.alerta)}</div>`;
+    if (bloqueado) h += `<div class="alerta">Há itens sem código de modelo. Corrija o cadastro do produto no Bling e clique em Sincronizar.</div>`;
+    h += '<table><thead><tr><th>Modelo</th><th>Descrição</th><th>Pares</th><th>Grade (tamanho: pares)</th></tr></thead><tbody>' +
+      p.linhas.map((l) => `<tr><td><b>${esc(l.modelo)}</b>${l.semCodigo ? '<span class="tag erro">sem código</span>' : l.modeloPelaDescricao ? '<span class="tag aviso" title="O cadastro do produto não tem código; o modelo foi lido da descrição. Confira.">lido da descrição</span>' : ''}</td>
+        <td>${esc(l.descricao)}</td><td><b>${nf(l.pares)}</b></td><td>${grade(l.grade)}</td></tr>`).join('') + '</tbody></table>';
+    if (p.status === 'programado' && p.programacao) {
+      h += '<table><thead><tr><th>OP</th><th>Modelo</th><th>Caixas</th><th>Previsão inicial</th><th></th></tr></thead><tbody>' +
+        p.programacao.map((l) => `<tr><td><b>${l.op}</b></td><td>${esc(l.modelo)}</td><td>${l.caixas} × até ${l.paresPorCaixa} pares</td><td>${fmtData(l.previsaoInicial)}</td>
+          <td><a class="tag ok" style="text-decoration:none" href="ops.html#imprimir=${l.op}">Imprimir fichas</a></td></tr>`).join('') + '</tbody></table>';
+      if (p.observacaoPcp) h += `<div class="meta" style="margin-top:8px">Observação do PCP: ${esc(p.observacaoPcp)}</div>`;
+    }
+    h += `<div class="prog ${aberto === p.id ? 'on' : ''}" id="prog-${p.id}"></div></div>`;
+    return h;
+  }
+
+  function montarProgramacao(p) {
+    const box = $('prog-' + p.id); if (!box) return;
+    box.innerHTML = `<table><thead><tr><th>Modelo</th><th>Pares</th><th style="width:130px">Pares por caixa</th><th style="width:170px">Previsão inicial *</th><th style="width:110px">Nº da OP</th><th>Resultado</th></tr></thead><tbody>` +
+      p.linhas.map((l, k) => `<tr class="linha" data-k="${k}"><td><b>${esc(l.modelo)}</b></td><td>${l.pares}</td>
+        <td><input type="number" min="1" max="20" value="20" class="pc"></td><td><input type="date" class="pv" required></td>
+        <td><input class="opn" placeholder="auto" inputmode="numeric"></td><td class="res"></td></tr>`).join('') +
+      `</tbody></table><div style="margin-top:12px"><label>Observação do PCP (capacidade, matriz, forma, prioridade…)</label><textarea class="obs"></textarea></div>
+       <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="primario go">Criar OPs e programar</button><span class="msg" id="m-${p.id}"></span></div>`;
+    const atualizar = () => box.querySelectorAll('tr.linha').forEach((tr) => {
+      const l = p.linhas[+tr.dataset.k], pc = +tr.querySelector('.pc').value;
+      tr.querySelector('.res').textContent = pc >= 1 && pc <= 20 ? `→ ${Math.ceil(l.pares / pc)} caixa(s)` : 'pares por caixa: 1 a 20';
+    });
+    box.querySelectorAll('.pc').forEach((i) => i.oninput = atualizar); atualizar();
+    box.querySelector('.go').onclick = async (ev) => {
+      ev.target.disabled = true; const m = $('m-' + p.id); m.className = 'msg'; m.textContent = 'Programando…';
+      const linhas = [...box.querySelectorAll('tr.linha')].map((tr) => ({ modelo: p.linhas[+tr.dataset.k].modelo, paresPorCaixa: +tr.querySelector('.pc').value,
+        previsaoInicial: tr.querySelector('.pv').value || undefined, op: tr.querySelector('.opn').value.trim() || undefined }));
+      if (linhas.some((l) => !l.previsaoInicial)) { m.className = 'msg err'; m.textContent = 'Informe a previsão inicial de cada modelo.'; ev.target.disabled = false; return; }
+      try {
+        const r = await api('/pedidos/' + p.id + '/programar', { method: 'POST', body: { linhas, observacaoPcp: box.querySelector('.obs').value } });
+        const ops = [...new Set(r.ordens.map((o) => o.op))];
+        aberto = null; aba = 'programado'; await carregar(); carga();
+        $('syncMsg').className = 'msg ok'; $('syncMsg').innerHTML = `Pedido ${esc(r.pedido.numero)} programado: OP ${ops.join(', ')}. <a style="color:var(--yellow)" href="ops.html#imprimir=${ops.join(',')}">Imprimir fichas</a>`;
+      } catch (e) { m.className = 'msg err'; m.textContent = e.message; ev.target.disabled = false; }
+    };
+  }
+
+  $('sync').onclick = async () => {
+    const m = $('syncMsg'); m.className = 'msg'; m.textContent = 'Buscando no Bling…'; $('sync').disabled = true;
+    try {
+      const r = await api('/pedidos/sincronizar', { method: 'POST', body: { dias: 7 }, timeout: 120000 });
+      m.className = 'msg ok'; m.textContent = `${r.novos} novo(s), ${r.atualizados} atualizado(s).`; await carregar();
+    } catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+    $('sync').disabled = false;
+  };
+
+  await carregar(); carga(); setInterval(() => { if (!aberto) { carregar(); carga(); } }, 30000);
+})();
+</script>
+</body>
+</html>

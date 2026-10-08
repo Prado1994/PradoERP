@@ -45,6 +45,9 @@ estoque/fiscal/pedidos de venda e o **Odoo** com o cadastro (produto, lista de m
   `painel.html` (acompanhamento ao vivo, atualiza a cada 15 s), `ops.html` (cria OPs por total de pares → caixas, imprime **fichas A6 com Code128**
   — conferidas com leitor zbar — e códigos PARADA/RETOMA). A chave de API é digitada uma vez por navegador. `Dockerfile` + `docker-compose.yml` prontos para a VPS.
   Verificado em navegador (Playwright): criar OP → bipar → painel → queda de rede → reenvio.
+- ✅ **Caixa de entrada de pedidos (08/10/2026):** `src/dominio/pedidos.ts`, `src/pedidos.ts`, `src/api/pedidos.ts`, `src/integracoes/bling-pedidos.ts`,
+  migração `002`, tela `web/pedidos.html`. Pedido do Bling → "a programar" → PCP define previsão, caixas e observação → OPs. Detalhes e decisões em
+  `docs/INTEGRACAO-BLING.md`. **Falta testar com o Bling real** (OAuth, webhook, limites). 79 testes.
 - ⚠ **Fuso:** datas de calendário são tratadas em UTC (`new Date('2026-10-16')`); rode com `TZ=UTC`. Perto da meia-noite de Brasília
   (21h–00h) o "hoje" do servidor já é o dia seguinte e o atraso muda 3 h antes. Corrigir antes do piloto (parsear datas em America/Sao_Paulo).
 - `web/prototipo/estacao-de-baixa.html`: protótipo antigo, **dados simulados no navegador**, não grava em lugar nenhum (referência visual).
@@ -74,7 +77,8 @@ estoque/fiscal/pedidos de venda e o **Odoo** com o cadastro (produto, lista de m
 3. ~~**Telas ligadas à API:**~~ **feito (MVP).** Antes: `POST /leituras` com `idLeitura` único e **fila local no navegador** se a rede cair;
    painel usando `GET /ordens` e `GET /indicadores`. A chave de API **não** vai no código: cada estação a digita uma vez
    e o navegador a guarda localmente (ou usar login simples na fase seguinte).
-4. **Criação de OPs em lote por plano** (`POST /ordens/lote`) — uma OP por caixa pesa no PCP; medir no piloto.
+4. **Hoje:** autorizar o Bling (`npm run bling:autorizar`), padronizar o código no cadastro de produto, testar **Sincronizar** com a conta real; depois corrigir o fuso e ensaiar o `docker-compose` na VPS.
+4b. ~~**Criação de OPs em lote por plano**~~ parcialmente coberto pela caixa de entrada. Antes: (`POST /ordens/lote`) — uma OP por caixa pesa no PCP; medir no piloto.
 5. **Piloto no modelo 40501** (docs/PILOTO-40501.md): uma semana, ficha de papel e Softpool em paralelo.
 6. Quando o módulo de OP do Bling for ativado: rodar o **teste de viabilidade** (docs/INTEGRACAO-BLING.md) **antes** de
    escrever o conector. Se não for ativado, o conector envia só movimentação de estoque.
@@ -84,7 +88,7 @@ estoque/fiscal/pedidos de venda e o **Odoo** com o cadastro (produto, lista de m
 
 - Regras de negócio ficam em `src/dominio` e **não** importam rede, banco nem Fastify.
 - Toda regra nova entra com teste. Antes de concluir: `npm run typecheck && npm test`.
-- O núcleo nunca fala "Bling" ou "Odoo": só o contrato `Destino`.
+- O núcleo nunca fala "Bling" ou "Odoo": só os contratos `Destino` (saída) e `FontePedidos` (entrada). `origem` é só um texto.
 - Nunca commitar `.env`, chaves, tokens ou dados reais de cliente. Repositório **privado**.
 - Não gravar cadastro no Odoo. O usuário de integração do Odoo precisa declarar as empresas permitidas
   (no piloto antigo, ordens de outra empresa ficaram invisíveis).

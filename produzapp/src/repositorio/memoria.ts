@@ -1,5 +1,6 @@
 import type { Repositorio } from './repositorio.js';
-import type { EventoEtapa, ItemFila, OrdemProducao, Parada, ResultadoLeitura } from '../dominio/tipos.js';
+import type { EventoEtapa, ItemFila, OrdemProducao, Parada, ResultadoLeitura, TokenIntegracao } from '../dominio/tipos.js';
+import type { PedidoEntrada } from '../dominio/pedidos.js';
 import type { Sigla } from '../dominio/etapas.js';
 
 /** Implementação em memória: desenvolvimento e testes. */
@@ -9,6 +10,8 @@ export class RepositorioMemoria implements Repositorio {
   private leituras = new Map<string, ResultadoLeitura>();
   private paradas = new Map<string, Parada>();
   private fila = new Map<string, ItemFila>();
+  private pedidos = new Map<string, PedidoEntrada>();
+  private tokens = new Map<string, TokenIntegracao>();
 
   async salvarOrdem(o: OrdemProducao) { this.ordens.set(o.id, o); }
   async buscarOrdem(id: string) { return this.ordens.get(id); }
@@ -43,4 +46,14 @@ export class RepositorioMemoria implements Repositorio {
   }
   async atualizarItemFila(item: ItemFila) { this.fila.set(item.id, item); }
   async listarFila() { return [...this.fila.values()]; }
+
+  async salvarPedido(p: PedidoEntrada) { this.pedidos.set(p.id, p); }
+  async buscarPedido(id: string) { return this.pedidos.get(id); }
+  async buscarPedidoPorOrigem(origem: string, idExterno: string) {
+    return [...this.pedidos.values()].find((p) => p.origem === origem && p.idExterno === idExterno);
+  }
+  async listarPedidos() { return [...this.pedidos.values()].sort((a, b) => a.recebidoEm.getTime() - b.recebidoEm.getTime()); }
+
+  async lerToken(nome: string) { return this.tokens.get(nome); }
+  async gravarToken(t: TokenIntegracao) { this.tokens.set(t.nome, t); }
 }

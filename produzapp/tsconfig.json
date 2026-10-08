@@ -10,5 +10,5 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["src", "tests", "api", "scripts/migrar.ts"]
+  "include": ["src", "tests", "api", "scripts/migrar.ts", "scripts/bling-autorizar.ts"]
 }
