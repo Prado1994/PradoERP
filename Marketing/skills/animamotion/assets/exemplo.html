@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exemplo de animações — Prado</title>
+<style>
+  /* Cores neutras de exemplo: troque pelas da marca (skill grupo-prado-idv) */
+  :root{
+    --bg:#0f1115; --fg:#f2f4f7; --muted:#9aa3b2; --acc:#f5b301; --card:#181b22;
+    --ease-out:cubic-bezier(0.16,1,0.3,1);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+  .hero{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:16px}
+  .hero__marca{color:var(--acc);letter-spacing:.2em;text-transform:uppercase;font-weight:700;font-size:.85rem}
+  .hero__titulo{font-size:clamp(2rem,6vw,4rem);margin:0;line-height:1.05}
+  .hero__sub{color:var(--muted);max-width:52ch;margin:0}
+  .hero__cta{align-self:flex-start;background:var(--acc);color:#111;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;
+    transition:transform 160ms var(--ease-out)}
+  @media (hover:hover){.hero__cta:hover{transform:translateY(-2px)}}
+  .numeros{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;padding:48px 0}
+  .num{background:var(--card);border-radius:12px;padding:24px}
+  .num strong{display:block;font-size:2.4rem;color:var(--acc)}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding-bottom:96px}
+  .card{background:var(--card);border-radius:12px;padding:24px;min-height:140px;
+    transition:transform 160ms var(--ease-out)}
+  @media (hover:hover){.card:hover{transform:translateY(-4px)}}
+  /* Oculta só se o JS estiver ativo: sem JS o conteúdo continua visível */
+  .js [data-reveal]{opacity:0}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="hero__marca">Safety Prado</div>
+    <h1 class="hero__titulo">Proteção que acompanha o seu dia de trabalho</h1>
+    <p class="hero__sub">Exemplo de abertura com entrada em sequência, contadores e cards revelados ao rolar.</p>
+    <a class="hero__cta" href="#produtos">Ver produtos</a>
+  </header>
+
+  <section class="numeros">
+    <div class="num" data-reveal><strong data-contar="550">0</strong>pares por dia</div>
+    <div class="num" data-reveal data-delay="80"><strong data-contar="25">0</strong>% de meta de crescimento</div>
+    <div class="num" data-reveal data-delay="160"><strong data-contar="2">0</strong>unidades de produção</div>
+  </section>
+
+  <section id="produtos" class="grade" data-stagger>
+    <article class="card">Produto 1</article><article class="card">Produto 2</article>
+    <article class="card">Produto 3</article><article class="card">Produto 4</article>
+    <article class="card">Produto 5</article><article class="card">Produto 6</article>
+  </section>
+</div>
+
+<script>
+document.documentElement.classList.add("js");
+const reduz = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+// Hero em sequência
+[".hero__marca",".hero__titulo",".hero__sub",".hero__cta"].forEach((sel, i) => {
+  document.querySelector(sel).animate(
+    reduz ? [{opacity:0},{opacity:1}]
+          : [{opacity:0,transform:"translateY(24px)"},{opacity:1,transform:"none"}],
+    {duration:700, delay:i*120, easing:OUT, fill:"backwards"}
+  );
+});
+
+// Stagger nos cards
+document.querySelectorAll("[data-stagger]").forEach(g =>
+  [...g.children].slice(0,8).forEach((c,i) => { c.dataset.reveal=""; c.dataset.delay=i*70; }));
+
+// Contador
+function contar(el, ate, ms=1400){
+  if (reduz){ el.textContent = ate.toLocaleString("pt-BR"); return; }
+  const t0 = performance.now(), ease = t => 1-Math.pow(1-t,4);
+  (function f(now){
+    const p = Math.min((now-t0)/ms,1);
+    el.textContent = Math.round(ate*ease(p)).toLocaleString("pt-BR");
+    if (p<1) requestAnimationFrame(f);
+  })(t0);
+}
+
+// Reveal ao rolar
+const io = new IntersectionObserver(es => {
+  for (const e of es){
+    if (!e.isIntersecting) continue;
+    const el = e.target;
+    el.animate(
+      reduz ? [{opacity:0},{opacity:1}]
+            : [{opacity:0,transform:"translateY(24px)"},{opacity:1,transform:"none"}],
+      {duration:400, delay:Number(el.dataset.delay||0), easing:OUT, fill:"both"}
+    );
+    const n = el.querySelector("[data-contar]");
+    if (n) contar(n, Number(n.dataset.contar));
+    io.unobserve(el);
+  }
+},{threshold:.2});
+document.querySelectorAll("[data-reveal]").forEach(el => io.observe(el));
+</script>
+</body>
+</html>
