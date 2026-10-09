@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Safety Prado Adventure 48506 — Spot 30s</title>
+<style>
+@font-face{font-family:'DM Sans';src:url(fonts/dmsans-latin.woff2) format('woff2');font-weight:100 1000;font-style:normal}
+:root{--navy:#1C2632;--blue:#2C3B4E;--terra:#9F5234;--yellow:#FEC761;--beige:#CCC1A9;--warm:#FFFCF4}
+*{margin:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--navy);font-family:'DM Sans',sans-serif;color:var(--warm)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--navy)}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+.logo svg{display:block;width:100%;height:auto}
+.logo{color:var(--yellow)}
+.glow{width:1500px;height:1500px;border-radius:50%;background:radial-gradient(closest-side,rgba(44,59,78,.95),rgba(28,38,50,0))}
+.big{font-weight:700;line-height:.92;letter-spacing:-.02em;white-space:nowrap}
+.y{color:var(--yellow)}
+.eyebrow{font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--beige);font-size:36px;white-space:nowrap}
+.boot{width:1100px}
+.boot img{display:block;width:100%;height:auto}
+.outline{font-weight:700;letter-spacing:-.03em;color:transparent;-webkit-text-stroke:3px rgba(204,193,169,.28);white-space:nowrap;line-height:.9}
+.lbl h3{font-size:44px;font-weight:700;color:var(--yellow);line-height:1.05;white-space:nowrap}
+.lbl p{font-size:28px;font-weight:400;color:var(--beige);white-space:nowrap}
+.dot{width:26px;height:26px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 0 rgba(254,199,97,.6)}
+.line{height:4px;background:var(--yellow);transform-origin:left center}
+.pill{background:var(--yellow);color:var(--navy);font-weight:700;border-radius:100px;white-space:nowrap;text-align:center}
+#wipe{position:absolute;top:-100px;height:1280px;width:2700px;transform:skewX(-12deg);background:var(--yellow);z-index:50;left:-3000px}
+#wipe::after{content:"";position:absolute;right:-60px;top:0;bottom:0;width:60px;background:var(--warm)}
+#dDots{display:flex;gap:16px}
+#fade{position:absolute;inset:0;background:var(--navy);z-index:60;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- fundo -->
+  <div class="abs glow" id="glow" style="left:560px;top:-120px"></div>
+
+  <!-- logo fixo -->
+  <div class="abs logo" id="logoS" style="left:80px;top:56px;width:240px">__LOGO__</div>
+
+  <!-- A: gancho -->
+  <div class="abs big y" id="a1" style="left:130px;top:180px;font-size:330px">PISE</div>
+  <div class="abs big y" id="a2" style="left:130px;top:470px;font-size:330px">FIRME.</div>
+  <div class="abs" id="aBar" style="left:140px;top:820px;width:560px;height:14px;background:var(--warm);transform-origin:left center"></div>
+  <div class="abs eyebrow" id="aSub" style="left:140px;top:870px">Safety Prado · Linha Adventure</div>
+
+  <!-- B: herói -->
+  <div class="abs eyebrow" id="b1" style="left:130px;top:260px">Linha Adventure</div>
+  <div class="abs big y" id="b2" style="left:120px;top:330px;font-size:300px">48506</div>
+  <div class="abs" id="b3" style="left:134px;top:660px;font-size:60px;font-weight:500">Botina Safety Prado</div>
+
+  <!-- botina principal (B/C) -->
+  <div class="abs boot" id="bootMain"><img src="img/preto.webp"></div>
+
+  <!-- C: detalhes -->
+  <div class="abs big" id="cTitle" style="left:0;top:96px;width:1920px;text-align:center;font-size:96px;color:var(--warm)">Olha o detalhe.</div>
+  <div id="callouts"></div>
+
+  <!-- D: cores -->
+  <div class="abs outline" id="dName1" style="left:30px;top:300px;font-size:420px">CAFÉ</div>
+  <div class="abs outline" id="dName2" style="left:30px;top:300px;font-size:420px">PRETO</div>
+  <div class="abs outline" id="dName3" style="left:30px;top:300px;font-size:420px">MARROM</div>
+  <div class="abs boot" id="dBoot1" style="width:1200px"><img src="img/cafe.webp"></div>
+  <div class="abs boot" id="dBoot2" style="width:1200px"><img src="img/preto.webp"></div>
+  <div class="abs boot" id="dBoot3" style="width:1200px"><img src="img/marrom.webp"></div>
+  <div class="abs big" id="dHead" style="left:120px;top:150px;font-size:110px;color:var(--warm)">Escolha<br>a sua cor.</div>
+  <div class="abs pill" id="dChip" style="left:120px;top:900px;font-size:56px;padding:18px 54px">CAFÉ</div>
+  <div class="abs" id="dDots" style="left:120px;top:1010px">
+    <i style="width:64px;height:10px;border-radius:5px;background:var(--beige);display:block"></i>
+    <i style="width:64px;height:10px;border-radius:5px;background:var(--beige);display:block"></i>
+    <i style="width:64px;height:10px;border-radius:5px;background:var(--beige);display:block"></i>
+  </div>
+
+  <!-- E: assinatura -->
+  <div class="abs big y" id="e1" style="left:0;top:100px;width:1920px;text-align:center;font-size:170px">FEITOS PARA</div>
+  <div class="abs big y" id="e2" style="left:0;top:265px;width:1920px;text-align:center;font-size:170px">DURAR.</div>
+  <div class="abs boot" id="eB1" style="width:620px"><img src="img/cafe.webp"></div>
+  <div class="abs boot" id="eB3" style="width:620px"><img src="img/marrom.webp"></div>
+  <div class="abs boot" id="eB2" style="width:700px"><img src="img/preto.webp"></div>
+  <div class="abs pill" id="ePill" style="left:0;top:520px;font-size:40px;padding:12px 40px;background:var(--warm)">DESDE 1994</div>
+
+  <!-- F: fechamento -->
+  <div class="abs logo" id="logoF" style="left:580px;top:250px;width:760px">__LOGO__</div>
+  <div class="abs eyebrow" id="f1" style="left:0;top:640px;width:1920px;text-align:center;font-size:32px">Safety Prado · Linha Adventure · Ref. 48506</div>
+  <div class="abs pill" id="f2" style="left:0;top:730px;font-size:48px;padding:22px 64px">Fale com um representante Prado</div>
+  <div class="abs" id="f3" style="left:0;top:900px;width:1920px;text-align:center;font-size:44px;font-weight:500;color:var(--warm)">@botinasprado</div>
+
+  <div id="wipe"></div>
+  <div id="fade"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x,a=0,b=1) => Math.min(b,Math.max(a,x));
+const P = (t,a,d) => clamp((t-a)/d);
+const eo = x => 1-Math.pow(1-x,4);            // ease-out forte
+const ei = x => x*x*x;                        // ease-in
+const eio = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+const lerp = (a,b,x) => a+(b-a)*x;
+function S(el,{x=0,y=0,s=1,r=0,o=1,sx=1}={}){
+  el.style.opacity=o;
+  el.style.transform=`translate(${x}px,${y}px) rotate(${r}deg) scale(${s*sx},${s})`;
+}
+function place(el,cx,cy){ el.dataset.cx=cx; el.dataset.cy=cy; }
+// posiciona elementos .boot pelo centro
+function bootAt(el,cx,cy,extra={}){
+  const w=el.offsetWidth, h=el.offsetHeight;
+  S(el,{x:cx-w/2+(extra.x||0), y:cy-h/2+(extra.y||0), s:extra.s||1, r:extra.r||0, o:extra.o===undefined?1:extra.o});
+}
+function textIn(el,t,a,d=.6,dy=70,x=0){ const p=eo(P(t,a,d)); S(el,{x:x,y:lerp(dy,0,p),o:P(t,a,d*.7)}); }
+
+// callouts (C): pontos como fração da imagem preta (ajustados por inspeção)
+const CALL=[
+  {k:'mesh',  fx:.88, fy:.37, side:'R', h:'Painel em mesh 3D',      p:'Tiras de nobuck na diagonal', t:8.9},
+  {k:'costura',fx:.42,fy:.56, side:'L', h:'Costura dupla aparente', p:'Acabamento firme',            t:10.5},
+  {k:'forro', fx:.66, fy:.07, side:'R', h:'Forro laranja',          p:'Colarinho acolchoado',        t:12.1},
+];
+const BOOT_C = {cx:960, cy:650, w:800};
+CALL.forEach(c=>{
+  c.dot=document.createElement('div'); c.dot.className='abs dot';
+  c.line=document.createElement('div'); c.line.className='abs line';
+  c.lbl=document.createElement('div'); c.lbl.className='abs lbl';
+  c.lbl.innerHTML=`<h3>${c.h}</h3><p>${c.p}</p>`;
+  [c.line,c.dot,c.lbl].forEach(e=>$('callouts').appendChild(e));
+});
+
+// camadas por cena, para ligar/desligar
+const sceneEls={
+  A:['a1','a2','aBar','aSub'],
+  B:['b1','b2','b3'],
+  C:['cTitle','callouts'],
+  D:['dName1','dName2','dName3','dBoot1','dBoot2','dBoot3','dHead','dChip','dDots'],
+  E:['e1','e2','eB1','eB2','eB3','ePill'],
+  F:['logoF','f1','f2','f3']
+};
+function show(list,on){ list.forEach(id=>$(id).style.display=on?'':'none'); }
+
+// tempos de corte (centro da cortina)
+const CUT=[3.2,14.2,21.0,26.0];
+const WD=.5;
+
+window.renderAt=function(t){
+  const A=t<CUT[0], B=t>=CUT[0]&&t<14.2, D=t>=CUT[1]&&t<CUT[2], E=t>=CUT[2]&&t<CUT[3], F=t>=CUT[3];
+  const Bg=B; // B e C partilham o bloco 3.2–14.2
+  show(sceneEls.A,A); show(sceneEls.B,Bg&&t<8.2); show(sceneEls.C,Bg&&t>=7.6);
+  show(sceneEls.D,D); show(sceneEls.E,E); show(sceneEls.F,F);
+  $('bootMain').style.display=Bg?'':'none';
+  $('logoS').style.display=F?'none':'';
+
+  // fundo: brilho respira
+  S($('glow'),{x:lerp(0,-60,t/30)+ (F?-300:0), y:0, s:1+0.05*Math.sin(t*.8), o:F?.6:1});
+
+  // logo pequeno
+  S($('logoS'),{o:P(t,.2,.5),y:lerp(-20,0,eo(P(t,.2,.5)))});
+
+  // ---------- A ----------
+  if(A){
+    const z=1+.04*P(t,0,3.2);
+    textIn($('a1'),t,.25,.55,140); textIn($('a2'),t,.55,.55,140);
+    $('a1').style.transform+=` scale(${z})`; $('a2').style.transform+=` scale(${z})`;
+    S($('aBar'),{sx:eo(P(t,1.1,.5)),o:P(t,1.1,.1)});
+    textIn($('aSub'),t,1.5,.5,30);
+  }
+
+  // ---------- B ----------
+  const bootBx=1450, bootBy=600;
+  if(Bg){
+    const tb=t-CUT[0];
+    const enter=eo(P(t,3.35,1.0));
+    const push=1+.07*P(t,4.3,3.7);
+    // transição B → C
+    const mv=eio(P(t,7.4,.9));
+    const cx=lerp(bootBx,BOOT_C.cx,mv), cy=lerp(bootBy,BOOT_C.cy,mv);
+    const sc=lerp(push, BOOT_C.w/920, mv);
+    const boot=$('bootMain'); boot.style.width='920px';
+    const w=920, h=boot.offsetHeight||w*.8165;
+    S(boot,{x:cx-w/2+lerp(900,0,enter), y:cy-h/2, s:sc, r:lerp(7,0,enter), o:P(t,3.35,.2)});
+  }
+  if(Bg&&t<8.2){
+    const out=eio(P(t,7.3,.7));
+    const ox=lerp(0,-260,out), oo=1-out;
+    textIn($('b1'),t,3.6,.6,40,0); $('b1').style.opacity=Math.min(P(t,3.6,.4),oo);
+    S($('b2'),{x:ox+lerp(-80,0,eo(P(t,3.8,.7))),y:0,o:Math.min(P(t,3.8,.4),oo)});
+    S($('b3'),{x:ox,y:lerp(40,0,eo(P(t,4.4,.6))),o:Math.min(P(t,4.4,.4),oo)});
+    $('b1').style.transform=`translate(${ox}px,${lerp(40,0,eo(P(t,3.6,.6)))}px)`;
+  }
+
+  // ---------- C ----------
+  if(Bg&&t>=7.6){
+    S($('cTitle'),{y:lerp(-40,0,eo(P(t,8.1,.6))),o:Math.min(P(t,8.1,.5),1-P(t,13.6,.5))});
+    const bw=BOOT_C.w, bh=bw*1633/2000;
+    const bx=BOOT_C.cx-bw/2, by=BOOT_C.cy-bh/2;
+    CALL.forEach(c=>{
+      const px=bx+c.fx*bw, py=by+c.fy*bh;
+      const lt=c.t, pd=P(t,lt,.35), pl=eo(P(t,lt+.2,.5)), pt=eo(P(t,lt+.5,.5));
+      const out=1-P(t,13.6,.5);
+      const L=c.side==='R'?(1390-px):(px-530);  // comprimento até a coluna de rótulos
+      S(c.dot,{x:px-13,y:py-13,s:eo(pd),o:pd*out});
+      c.dot.style.boxShadow=`0 0 0 ${18*P(t,lt+.2,1.2)}px rgba(254,199,97,${.45*(1-P(t,lt+.2,1.2))})`;
+      if(c.side==='R'){ S(c.line,{x:px,y:py-2,sx:pl*L/100,o:out*pd}); c.line.style.width='100px'; }
+      else { S(c.line,{x:px,y:py-2,sx:pl*L/100,o:out*pd}); c.line.style.width='100px'; c.line.style.transformOrigin='left center'; c.line.style.left='0';
+             c.line.style.transform=`translate(${px-L*pl}px,${py-2}px) scale(${L*pl/100},1)`; c.line.style.transformOrigin='left center'; }
+      const lx=c.side==='R'?1410:510-c.lbl.offsetWidth;
+      S(c.lbl,{x:lx+lerp(c.side==='R'?60:-60,0,pt),y:py-c.lbl.offsetHeight/2-6,o:pt*out});
+    });
+  }
+
+  // ---------- D ----------
+  if(D){
+    const segs=[[14.2,16.6],[16.6,18.8],[18.8,21.0]]; // 1=café 2=preto 3=marrom
+    const names=['CAFÉ','PRETO','MARROM'];
+    const cx=1120, cy=640;
+    segs.forEach(([a,b],i)=>{
+      const first=i===0, last=i===2;
+      const ein=eo(P(t,a+(first?.35:0),.7));
+      const eout=ei(P(t,b-.05,.4));
+      const vis = t>=a+(first?.2:-.05) && t<b+.4;
+      const boot=$('dBoot'+(i+1)), nm=$('dName'+(i+1));
+      boot.style.display=vis?'':'none'; nm.style.display=vis?'':'none';
+      if(!vis) return;
+      const x= lerp(900,0,ein)+lerp(0,-1100,last?0:eout);
+      const o = Math.min(P(t,a+(first?.2:0),.25), last?1:1-eout*.9);
+      bootAt(boot,cx,cy,{x:x,s:lerp(.9,1,ein),r:lerp(5,0,ein),o:o});
+      const nx=lerp(500,0,ein)+lerp(0,-900,last?0:eout);
+      S(nm,{x:nx+ (i===1?80:i===2?-20:150), y:0, o:Math.min(P(t,a+(first?.2:0),.25),last?1:1-eout)});
+    });
+    S($('dHead'),{x:lerp(-80,0,eo(P(t,14.6,.7))),o:P(t,14.6,.5)});
+    // chip e pontos
+    const idx=t<16.6?0:t<18.8?1:2;
+    $('dChip').textContent=names[idx];
+    const segA=[14.2,16.6,18.8][idx];
+    S($('dChip'),{s:lerp(.85,1,eo(P(t,segA+.1,.35))),o:P(t,14.7,.4)});
+    $('dChip').style.transformOrigin='left center';
+    S($('dDots'),{o:P(t,14.7,.4)});
+    [...$('dDots').children].forEach((d,i)=>{d.style.background=i===idx?'#FEC761':'#CCC1A9'; d.style.opacity=i===idx?1:.4; d.style.width=(i===idx?120:64)+'px';});
+  }
+
+  // ---------- E ----------
+  if(E){
+    textIn($('e1'),t,21.3,.6,120); textIn($('e2'),t,21.55,.6,120);
+    const defs=[['eB1',470,805,21.8],['eB3',1450,805,22.05],['eB2',960,790,22.3]];
+    defs.forEach(([id,cx,cy,a])=>{
+      const p=eo(P(t,a,.9));
+      bootAt($(id),cx,cy,{y:lerp(520,0,p),o:P(t,a,.25),s:1+.04*P(t,a+.9,3.5)});
+    });
+    S($('ePill'),{x:(1920-$('ePill').offsetWidth)/2,y:lerp(30,0,eo(P(t,23.8,.5))),o:P(t,23.8,.4)});
+    // pill acima do herói, posicionado entre título e botinas
+    $('ePill').style.top='445px';
+  }
+
+  // ---------- F ----------
+  if(F){
+    const p=eo(P(t,26.45,.8));
+    S($('logoF'),{s:lerp(.88,1,p),o:P(t,26.45,.4)});
+    S($('f1'),{y:lerp(30,0,eo(P(t,27.0,.5))),o:P(t,27.0,.4)});
+    const pw=$('f2').offsetWidth;
+    S($('f2'),{x:(1920-pw)/2,y:lerp(40,0,eo(P(t,27.4,.5))),o:P(t,27.4,.3),s:1+.025*Math.sin(Math.max(0,t-28)*5)*(t>28?1:0)});
+    S($('f3'),{y:lerp(30,0,eo(P(t,27.9,.5))),o:P(t,27.9,.4)});
+  }
+
+  // ---------- cortinas ----------
+  let wl=-3000;
+  for(const c of CUT){
+    const p=P(t,c-WD/2,WD);
+    if(p>0&&p<1) wl=lerp(-2700-300, 1920, p) ;
+  }
+  $('wipe').style.left=wl+'px';
+  // fade de entrada e saída
+  const fi=1-P(t,0,.3), fo=P(t,29.55,.45);
+  $('fade').style.opacity=Math.max(fi,fo);
+};
+// centraliza botina B/C pela primeira renderização (precisa de offsetHeight)
+document.fonts.ready.then(()=>{window.__ready=true; renderAt(0);});
+</script>
+</body>
+</html>
